@@ -1,0 +1,12 @@
+__pycache__/
+.venv/
+bot.env
+logs/
+.DS_Store
+.git/
+.venv/
+.vscode
+.github/
+.flake8
+.gitignore
+create_venv.sh
