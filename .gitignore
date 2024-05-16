@@ -1,5 +1,5 @@
 __pycache__/
 .venv/
-bot.env
+local.env
 logs/
 .DS_Store

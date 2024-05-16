@@ -1,23 +1,15 @@
 import asyncio
-import logging
-import os
-import sys
 
 from aiogram import Bot, Dispatcher, html
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 from aiogram.filters import CommandStart
 from aiogram.types import Message
-from dotenv import load_dotenv
 
-bot_env = os.path.join(os.getcwd(), "bot.env")
-if os.path.isfile(bot_env):
-    print("Bot environment file found and loaded...")
-    load_dotenv(bot_env)
-TOKEN = os.getenv("TOKEN")
-if not TOKEN:
-    raise ValueError("Can't find TOKEN for bot token in environment variables")
+import src.globals as g
+from src.logger import Logger
 
+logger = Logger(__name__)
 dp = Dispatcher()
 
 
@@ -31,7 +23,7 @@ async def command_start_handler(message: Message) -> None:
     # and the target chat will be passed to :ref:`aiogram.methods.send_message.SendMessage`
     # method automatically or call API method directly via
     # Bot instance: `bot.send_message(chat_id=message.chat.id, ...)`
-    await message.answer(f"Hello, {html.bold(message.from_user.full_name)}!")
+    await message.answer(f"Hello, {html.bold(message.from_user.id)}!")
 
 
 @dp.message()
@@ -51,11 +43,11 @@ async def echo_handler(message: Message) -> None:
 
 async def main() -> None:
     # Initialize Bot instance with default bot properties which will be passed to all API calls
-    bot = Bot(token=TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
+    bot = Bot(token=g.TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
     # And the run events dispatching
     await dp.start_polling(bot)
 
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO, stream=sys.stdout)
+    logger.info("Bot is starting...")
     asyncio.run(main())
