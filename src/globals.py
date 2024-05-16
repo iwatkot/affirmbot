@@ -8,8 +8,11 @@ from src.logger import Logger
 from src.utils import EnvVars, env_to_list
 
 logger = Logger(__name__)
+CWD = os.getcwd()
+LOCAL_ENV = os.path.join(CWD, "local.env")
+DEFAULT_CONFIG = os.path.join(CWD, "config.yml")
 
-local_env = os.path.join(os.getcwd(), "local.env")
+local_env = os.path.join(LOCAL_ENV)
 if os.path.isfile(local_env):
     logger.debug(f"Loading local environment variables from {local_env}")
     load_dotenv(local_env)
@@ -29,11 +32,15 @@ if CONFIG:
     config_yaml = ""
 else:
     logger.info("No CONFIG environment variable found, using default config.yml")
-    config_yaml = os.path.join(os.getcwd(), "config.yml")
+    config_yaml = DEFAULT_CONFIG
 
 if not os.path.isfile(config_yaml):
     raise FileNotFoundError(f"Can't find config file at {config_yaml}")
 
-config = Config(config_yaml)
+try:
+    config = Config(config_yaml)
+except ValueError as e:
+    logger.error(f"Failed to load config: {e}, will use default config.")
+    config = Config(DEFAULT_CONFIG)
 forms = [Form(**form) for form in config.forms]
 logger.info(f"Loaded {len(forms)} forms: {forms}")

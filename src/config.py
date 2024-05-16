@@ -10,6 +10,11 @@ class Config:
         config_json = yaml.safe_load(open(config_yaml))
         logger.debug(f"Loaded config from {config_yaml}: {config_json}")
 
+        forms = config_json.get("forms", [])
+        if not forms:
+            logger.error("No forms found in config")
+            raise ValueError("No forms found in config")
+
         self._forms = config_json.get("forms", [])
 
     @property
