@@ -6,6 +6,16 @@ class EnvVars:
 
     TOKEN = "TOKEN"
     ADMINS = "ADMINS"
+    CONFIG = "CONFIG"
+
+
+class Modes:
+    """Simple class to store modes."""
+
+    MODE = "mode"
+    TEXT = "text"
+    DATE = "date"
+    ONEOF = "oneof"
 
 
 def env_to_list(env_name: str, separator: str = ",", cast: type = int) -> list:

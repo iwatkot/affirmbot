@@ -1,0 +1,16 @@
+forms:
+  - title: "Default Form"
+    description: "This is the default form"
+    entries:
+    - mode: "text"
+      title: "Name"
+      description: "Enter your name"
+    - mode: "date"
+      title: "Date of Birth"
+      description: "Enter your date of birth"
+    - mode: "oneof"
+      title: "Gender"
+      options:
+        - "Male"
+        - "Female"
+        - "Other"
