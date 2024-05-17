@@ -1,4 +1,4 @@
-forms:
+templates:
   - title: "Default Form"
     description: "This is the default form"
     entries:

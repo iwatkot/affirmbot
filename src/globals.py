@@ -42,5 +42,4 @@ try:
 except ValueError as e:
     logger.error(f"Failed to load config: {e}, will use default config.")
     config = Config(DEFAULT_CONFIG)
-forms = [Form(**form) for form in config.forms]
-logger.info(f"Loaded {len(forms)} forms: {forms}")
+logger.info(f"Loaded {len(config.templates)} templates: {config.templates}")

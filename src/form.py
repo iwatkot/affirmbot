@@ -30,7 +30,7 @@ class Form:
 
     @property
     def entries(self) -> Generator[Entry, None, None]:
-        for entry in self.entries:
+        for entry in self._entries:
             yield entry
 
     def get_entries(self) -> list[Entry]:
