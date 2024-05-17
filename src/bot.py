@@ -11,6 +11,7 @@ from aiogram.types import Message
 import src.globals as g
 from src.logger import Logger
 from src.settings import Settings
+from src.template import Entry
 from src.utils import CombinedMeta
 
 logger = Logger(__name__)
@@ -21,14 +22,10 @@ dp = Dispatcher()
 form_router = Router()
 
 
-# class Form(StatesGroup):
-#     name = State()
-#     like_bots = State()
-#     language = State()
+def routers(form: StatesGroup, titles: list[str]) -> callable:
+    attributes = [getattr(form, attr) for attr in titles]
 
-
-def apply_form_decorators(attributes):
-    def decorator(func):
+    def decorator(func: callable) -> callable:
         for attr in reversed(attributes):
             func = form_router.message(attr)(func)
         return func
@@ -39,56 +36,53 @@ def apply_form_decorators(attributes):
 @form_router.message(CommandStart())
 async def command_start(message: Message, state: FSMContext) -> None:
     template = settings.get_template()
-    entries = [entry.title for entry in template.get_entries()]
+    entries = template.get_entries()
+    titles = [entry.title for entry in template.get_entries()]
 
-    class Form(StatesGroup, metaclass=CombinedMeta, entries=entries):
+    class Form(StatesGroup, metaclass=CombinedMeta, titles=titles):
         pass
 
-    await state.set_state(getattr(Form, entries[0]))
-    await message.answer(
-        "Hi there! What's your name?",
-    )
+    first_entry = entries[0]
 
-    @apply_form_decorators([getattr(Form, attr) for attr in entries])
+    await state.set_state(getattr(Form, first_entry.title))
+    await message.answer(prepare_message(first_entry))
+
+    @routers(Form, titles)
     async def process_name(message: Message, state: FSMContext) -> None:
         current_state = await state.get_state()
-        if current_state == getattr(Form, entries[0]):
-            await state.update_data(name=message.text)
-            await state.set_state(getattr(Form, entries[1]))
-            await message.answer("STEP 1")
-        elif current_state == getattr(Form, entries[1]):
-            await state.update_data(like_bots=message.text)
-            await state.set_state(getattr(Form, entries[2]))
-            await message.answer("STEP 2")
-        elif current_state == getattr(Form, entries[2]):
-            await state.update_data(language=message.text)
+        step = get_step(Form, current_state, titles)
+
+        await state.update_data(**{get_title(current_state): message.text})
+        if step == len(entries) - 1:
             data = await state.get_data()
             await message.answer(f"Data: {data}")
+            return
+
+        next_step = step + 1
+        await state.set_state(getattr(Form, titles[next_step]))
+        await message.answer(prepare_message(entries[next_step]))
 
 
-# @dp.message(Command("template"))
-# async def command_template_handler(message: Message, state: FSMContext) -> None:
-#     class Form(StatesGroup):
-#         name = State()
-#         like_bots = State()
-#         language = State()
+def prepare_message(entry: Entry) -> str:
+    message = f"<b>{entry.title}</b>\n\n"
+    if entry.description:
+        message += f"{entry.description}\n"
+    return message
 
-#     attributes = [Form.name, Form.like_bots, Form.language]
-#     await state.set_state(Form.name)
 
-#     # template = settings.get_template()
-#     # for entry in template.entries:
-#     #     await message.answer(str(entry))
-#     @apply_form_decorators(attributes)
-#     def your_function(message: Message, state: FSMContext):
-#         print(message.text)
+def get_title(current_state: str) -> str:
+    return current_state.split(":")[1]
+
+
+def get_step(form: StatesGroup, current_state: str, titles: list[str]) -> int:
+    for idx, title in enumerate(titles):
+        if current_state == getattr(form, title):
+            return idx
 
 
 async def main() -> None:
-    # Initialize Bot instance with default bot properties which will be passed to all API calls
     bot = Bot(token=g.TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
     dp.include_router(form_router)
-    # And the run events dispatching
     await dp.start_polling(bot)
 
 

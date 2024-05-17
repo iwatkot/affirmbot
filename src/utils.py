@@ -34,10 +34,10 @@ def env_to_list(env_name: str, separator: str = ",", cast: type = int) -> list:
 
 
 class FormMeta(type):
-    def __new__(cls, name, bases, attrs, entries=None):
-        if entries is None:
-            entries = []
-        for attr in entries:
+    def __new__(cls, name, bases, attrs, titles=None):
+        if titles is None:
+            titles = []
+        for attr in titles:
             attrs[attr] = State()
         return super().__new__(cls, name, bases, attrs)
 
