@@ -2,8 +2,8 @@ import copy
 
 import yaml
 
-from src.form import Form
 from src.logger import Logger
+from src.template import Template
 
 logger = Logger(__name__)
 
@@ -17,22 +17,22 @@ class Config:
         if not templates_json:
             logger.error("No templates found in config")
             raise ValueError("No templates found in config")
-        self._templates = [Form(**template) for template in templates_json]
+        self._templates = [Template(**template) for template in templates_json]
 
     @property
-    def templates(self) -> list[Form]:
+    def templates(self) -> list[Template]:
         return self._templates
 
-    def get_form(self, form_title: str = None, form_idx: int = None) -> Form | None:
-        if form_title:
+    def get_template(self, template_title: str = None, template_idx: int = None) -> Template | None:
+        if template_title:
             for form in self.templates:
-                if form.title == form_title:
+                if form.title == template_title:
                     return copy.deepcopy(form)
-        if form_idx:
-            form_idx = form_idx - 1
-            if form_idx >= len(self.templates):
+        if template_idx:
+            template_idx = template_idx - 1
+            if template_idx >= len(self.templates):
                 logger.error(
-                    f"Invalid form index: {form_idx}, available indexes from 1 to {len(self.templates)}"
+                    f"Invalid form index: {template_idx}, available indexes from 1 to {len(self.templates)}"
                 )
                 return
-            return copy.deepcopy(self.templates[form_idx])
+            return copy.deepcopy(self.templates[template_idx])

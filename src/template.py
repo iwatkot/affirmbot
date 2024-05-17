@@ -9,7 +9,7 @@ from src.utils import Modes
 logger = Logger(__name__)
 
 
-class Form:
+class Template:
     def __init__(
         self,
         title: str,

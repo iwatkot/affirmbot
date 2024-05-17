@@ -3,7 +3,6 @@ import os
 from dotenv import load_dotenv
 
 from src.config import Config
-from src.form import Form
 from src.logger import Logger
 from src.utils import EnvVars, env_to_list
 

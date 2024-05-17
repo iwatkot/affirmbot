@@ -1,5 +1,7 @@
 import os
 
+from aiogram.fsm.state import State, StatesGroup
+
 
 class EnvVars:
     """Simple class to store environment variables names."""
@@ -29,3 +31,16 @@ def env_to_list(env_name: str, separator: str = ",", cast: type = int) -> list:
         list: List of values
     """
     return [cast(env.strip()) for env in os.getenv(env_name, "").split(separator) if env.strip()]
+
+
+class FormMeta(type):
+    def __new__(cls, name, bases, attrs, entries=None):
+        if entries is None:
+            entries = []
+        for attr in entries:
+            attrs[attr] = State()
+        return super().__new__(cls, name, bases, attrs)
+
+
+class CombinedMeta(FormMeta, type(StatesGroup)):
+    pass
