@@ -32,14 +32,12 @@ class Template:
     def description(self) -> str:
         return self._description
 
-    # @property
-    # def entries(self) -> Generator[Entry, None, None]:
-    #     for entry in self._entries:
-    #         yield entry
-
     @property
     def entries(self) -> list[Entry]:
         return self._entries
+
+    def get_entry(self, idx: int) -> Entry:
+        return self.entries[idx]
 
     def __repr__(self) -> str:
         return f"Form title='{self.title}' | description='{self.description}' | entries='{self.entries}'"
