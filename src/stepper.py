@@ -64,6 +64,13 @@ class Stepper:
         self.step += 1
         logger.debug(f"Moving forward to step {self.step}...")
 
+    async def validate(self, message: Message) -> bool:
+        correct = self.entry.validate_answer(message)
+        if not correct:
+            await message.answer(self.entry.incorrect)
+            return False
+        return True
+
     async def update(self, message: Message, state: FSMContext) -> None:
         self._state = state
         self._current_state = await self._state.get_state()
@@ -86,6 +93,10 @@ class Stepper:
     @property
     def ended(self) -> bool:
         return self.step == self._steps
+
+    @property
+    def entry(self):
+        return self._template.get_entry(self.step - 1)
 
     def _prepare_message(self) -> str:
         entry = self._template.get_entry(self.step)

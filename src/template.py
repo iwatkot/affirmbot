@@ -3,12 +3,10 @@ from __future__ import annotations
 from datetime import datetime
 
 from aiogram.fsm.state import StatesGroup
+from aiogram.types import Message
 
 from src.logger import Logger
 from src.utils import CombinedMeta, Modes
-
-# from typing import Generator
-
 
 logger = Logger(__name__)
 
@@ -53,11 +51,18 @@ class Template:
 
 
 class Entry:
-    def __init__(self, title: str, description: str = None, options: list[str] = None, **kwargs):
+    def __init__(
+        self,
+        title: str,
+        incorrect: str,
+        description: str = None,
+        options: list[str] = None,
+        **kwargs,
+    ):
         self.title = title
+        self.incorrect = incorrect
         self.description = description
         self.options = options
-        self._answer = None
 
     @classmethod
     def from_json(cls, data: dict[str, str | list[str]]) -> Entry:
@@ -75,28 +80,16 @@ class Entry:
     def __repr__(self) -> str:
         return f"Entry title='{self.title}' | description='{self.description}' | options='{self.options}'"
 
-    def save_answer(self, answer: str) -> bool:
-        if self._validate_answer(answer):
-            self._answer = answer
-            logger.debug(f"Saved answer for {self.title}: {answer}")
-            return True
-        else:
-            logger.error(f"Failed to save answer for {self.title}: {answer}")
-            return False
-
-    def _validate_answer(self, answer: str) -> bool:
+    def validate_answer(self, message: Message) -> bool:
         raise NotImplementedError
-
-    @property
-    def answer(self) -> str:
-        return self._answer
 
 
 class TextEntry(Entry):
-    def __init__(self, title: str, description: str = None, **kwargs):
-        super().__init__(title, description, **kwargs)
+    def __init__(self, title: str, incorrect: str, description: str = None, **kwargs):
+        super().__init__(title, incorrect, description, **kwargs)
 
-    def _validate_answer(self, answer: str) -> bool:
+    def validate_answer(self, message: Message) -> bool:
+        answer = message.text
         try:
             assert isinstance(answer, str)
             return True
@@ -105,10 +98,12 @@ class TextEntry(Entry):
 
 
 class DateEntry(Entry):
-    def __init__(self, title: str, description: str = None, **kwargs):
-        super().__init__(title, description, **kwargs)
 
-    def _validate_answer(self, answer: str) -> bool:
+    def __init__(self, title: str, incorrect: str, description: str = None, **kwargs):
+        super().__init__(title, incorrect, description, **kwargs)
+
+    def validate_answer(self, message: Message) -> bool:
+        answer = message.text
         date_formats = ["%Y-%m-%d", "%d-%m-%Y", "%m-%d-%Y", "%Y.%m.%d", "%d.%m.%Y", "%m.%d.%Y"]
         for date_format in date_formats:
             try:
@@ -120,5 +115,17 @@ class DateEntry(Entry):
 
 
 class OneOfEntry(Entry):
-    def __init__(self, title: str, description: str = None, options: list[str] = None, **kwargs):
-        super().__init__(title, description, options, **kwargs)
+
+    def __init__(
+        self,
+        title: str,
+        incorrect: str,
+        description: str = None,
+        options: list[str] = None,
+        **kwargs,
+    ):
+        super().__init__(title, incorrect, description, options, **kwargs)
+
+    def validate_answer(self, message: Message) -> bool:
+        answer = message.text
+        return answer in self.options

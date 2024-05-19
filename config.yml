@@ -4,12 +4,18 @@ templates:
     entries:
     - mode: "text"
       title: "Name"
+      correct: "It was a correct name"
+      incorrect: "It was an incorrect name"
       description: "Enter your name"
     - mode: "date"
       title: "Date of Birth"
+      correct: "It was a correct date of birth"
+      incorrect: "It was an incorrect date of birth"
       description: "Enter your date of birth"
     - mode: "oneof"
       title: "Gender"
+      correct: "It was a correct answer"
+      incorrect: "It was an incorrect answer"
       options:
         - "Male"
         - "Female"

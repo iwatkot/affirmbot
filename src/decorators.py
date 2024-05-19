@@ -27,7 +27,11 @@ def routers(router: Router, template: Template) -> callable:
 def log_message(func):
     @wraps(func)
     async def wrapper(message, *args, **kwargs):
-        logger.debug(message.text, message.from_user.id, message.from_user.first_name)
+        logger.debug(
+            f"ID: {message.from_user.id} | "
+            f"Name: {message.from_user.first_name} {message.from_user.last_name} | "
+            f"Message: {message.text}"
+        )
         return await func(message, *args, **kwargs)
 
     return wrapper

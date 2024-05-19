@@ -30,7 +30,9 @@ async def command_start(message: Message, state: FSMContext) -> None:
     @routers(router, template)
     @handle_errors
     async def steps(message: Message, state: FSMContext) -> None:
-        # TODO: Implement answer validation.
+        if not await stepper.validate(message):
+            return
+
         await stepper.update(message, state)
 
         if stepper.ended:
