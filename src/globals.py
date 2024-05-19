@@ -16,6 +16,13 @@ if os.path.isfile(local_env):
     logger.debug(f"Loading local environment variables from {local_env}")
     load_dotenv(local_env)
 TOKEN = os.getenv(EnvVars.TOKEN)
+env = os.getenv(EnvVars.ENV)
+if env == "DEV":
+    is_development = True
+    logger.info("Running in development mode.")
+else:
+    is_development = False
+    logger.info("Running in production mode.")
 if not TOKEN:
     raise ValueError("Can't find TOKEN for bot token in environment variables")
 logger.info(f"Found TOKEN in environment variables (hidden): {'*' * len(TOKEN)}.")

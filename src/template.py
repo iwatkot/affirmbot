@@ -5,6 +5,7 @@ from datetime import datetime
 from aiogram.fsm.state import StatesGroup
 from aiogram.types import Message
 
+import src.globals as g
 from src.logger import Logger
 from src.utils import CombinedMeta, Modes
 
@@ -103,6 +104,8 @@ class DateEntry(Entry):
         super().__init__(title, incorrect, description, **kwargs)
 
     def validate_answer(self, message: Message) -> bool:
+        if g.is_development:
+            return True
         answer = message.text
         date_formats = ["%Y-%m-%d", "%d-%m-%Y", "%m-%d-%Y", "%Y.%m.%d", "%d.%m.%Y", "%m.%d.%Y"]
         for date_format in date_formats:
@@ -127,5 +130,7 @@ class OneOfEntry(Entry):
         super().__init__(title, incorrect, description, options, **kwargs)
 
     def validate_answer(self, message: Message) -> bool:
+        if g.is_development:
+            return True
         answer = message.text
         return answer in self.options

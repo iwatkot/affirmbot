@@ -18,6 +18,7 @@ class EnvVars:
     TOKEN = "TOKEN"
     ADMINS = "ADMINS"
     CONFIG = "CONFIG"
+    ENV = "ENV"
 
 
 def env_to_list(env_name: str, separator: str = ",", cast: type = int) -> list:
