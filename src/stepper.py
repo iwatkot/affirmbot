@@ -8,7 +8,8 @@ logger = Logger(__name__)
 
 
 class Stepper:
-    def __init__(self, template: Template, state: FSMContext, message: Message = None):
+
+    def __init__(self, message: Message, state: FSMContext, template: Template = None):
         self._template = template
         self._titles = [entry.title for entry in self._template.entries]
         self._steps = len(self._template.entries)
@@ -63,7 +64,7 @@ class Stepper:
         self.step += 1
         logger.debug(f"Moving forward to step {self.step}...")
 
-    async def update(self, state: FSMContext, message: Message) -> None:
+    async def update(self, message: Message, state: FSMContext) -> None:
         self._state = state
         self._current_state = await self._state.get_state()
         logger.debug(f"Current state updated to {self._current_state}...")

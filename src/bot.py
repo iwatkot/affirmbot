@@ -24,14 +24,14 @@ router = Router()
 @handle_errors
 async def command_start(message: Message, state: FSMContext) -> None:
     template = settings.get_template()
-    stepper = Stepper(template, state, message)
+    stepper = Stepper(message, state, template)
     await stepper.start()
 
     @routers(router, template)
     @handle_errors
-    async def process_name(message: Message, state: FSMContext) -> None:
+    async def steps(message: Message, state: FSMContext) -> None:
         # TODO: Implement answer validation.
-        await stepper.update(state, message)
+        await stepper.update(message, state)
 
         if stepper.ended:
             await stepper.close()
