@@ -19,6 +19,12 @@ class Config:
             raise ValueError("No templates found in config")
         self._templates = [Template(**template) for template in templates_json]
 
+        welcome = config_json.get("welcome")
+        if not welcome:
+            logger.error("No welcome message found in config")
+            raise ValueError("No welcome message found in config")
+        self._welcome = welcome
+
     @property
     def templates(self) -> list[Template]:
         return self._templates
@@ -36,3 +42,7 @@ class Config:
                 )
                 return
             return copy.deepcopy(self.templates[template_idx])
+
+    @property
+    def welcome(self) -> str:
+        return self._welcome
