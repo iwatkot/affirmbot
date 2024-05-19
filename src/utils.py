@@ -3,14 +3,6 @@ import os
 from aiogram.fsm.state import State, StatesGroup
 
 
-class EnvVars:
-    """Simple class to store environment variables names."""
-
-    TOKEN = "TOKEN"
-    ADMINS = "ADMINS"
-    CONFIG = "CONFIG"
-
-
 class Modes:
     """Simple class to store modes."""
 
@@ -18,6 +10,14 @@ class Modes:
     TEXT = "text"
     DATE = "date"
     ONEOF = "oneof"
+
+
+class EnvVars:
+    """Simple class to store environment variables names."""
+
+    TOKEN = "TOKEN"
+    ADMINS = "ADMINS"
+    CONFIG = "CONFIG"
 
 
 def env_to_list(env_name: str, separator: str = ",", cast: type = int) -> list:

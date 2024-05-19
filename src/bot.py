@@ -1,18 +1,16 @@
 import asyncio
 
-from aiogram import Bot, Dispatcher, Router, html
+from aiogram import Bot, Dispatcher, Router
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
-from aiogram.filters import Command, CommandStart
+from aiogram.filters import CommandStart
 from aiogram.fsm.context import FSMContext
-from aiogram.fsm.state import State, StatesGroup
 from aiogram.types import Message
 
 import src.globals as g
 from src.logger import Logger
 from src.settings import Settings
-from src.template import Entry
-from src.utils import CombinedMeta
+from src.template import Entry, Template
 
 logger = Logger(__name__)
 settings = Settings(g.ADMINS)
@@ -22,8 +20,8 @@ dp = Dispatcher()
 form_router = Router()
 
 
-def routers(form: StatesGroup, titles: list[str]) -> callable:
-    attributes = [getattr(form, attr) for attr in titles]
+def routers(template: Template) -> callable:
+    attributes = [getattr(template.form, entry.title) for entry in template.entries]
 
     def decorator(func: callable) -> callable:
         for attr in reversed(attributes):
@@ -36,31 +34,37 @@ def routers(form: StatesGroup, titles: list[str]) -> callable:
 @form_router.message(CommandStart())
 async def command_start(message: Message, state: FSMContext) -> None:
     template = settings.get_template()
-    entries = template.get_entries()
-    titles = [entry.title for entry in template.get_entries()]
+    await process_step(template, state, message)
 
-    class Form(StatesGroup, metaclass=CombinedMeta, titles=titles):
-        pass
-
-    first_entry = entries[0]
-
-    await state.set_state(getattr(Form, first_entry.title))
-    await message.answer(prepare_message(first_entry))
-
-    @routers(Form, titles)
+    @routers(template)
     async def process_name(message: Message, state: FSMContext) -> None:
         current_state = await state.get_state()
-        step = get_step(Form, current_state, titles)
+        step = get_step(current_state, template)
 
         await state.update_data(**{get_title(current_state): message.text})
-        if step == len(entries) - 1:
+        if step == len(template.entries) - 1:
             data = await state.get_data()
             await message.answer(f"Data: {data}")
             return
 
         next_step = step + 1
-        await state.set_state(getattr(Form, titles[next_step]))
-        await message.answer(prepare_message(entries[next_step]))
+        await process_step(template, state, message, next_step)
+
+
+async def process_step(
+    template: Template, state: FSMContext, message: Message, step: int = 0
+) -> None:
+    await _update_state(template, state, step)
+    await _send_answer(template, message, step)
+
+
+async def _update_state(template: Template, state: FSMContext, step: int = 0) -> None:
+    titles = [entry.title for entry in template.entries]
+    await state.set_state(getattr(template.form, titles[step]))
+
+
+async def _send_answer(template: Template, message: Message, step: int = 0) -> None:
+    await message.answer(prepare_message(template.entries[step]))
 
 
 def prepare_message(entry: Entry) -> str:
@@ -74,9 +78,10 @@ def get_title(current_state: str) -> str:
     return current_state.split(":")[1]
 
 
-def get_step(form: StatesGroup, current_state: str, titles: list[str]) -> int:
+def get_step(current_state: str, template: Template) -> int:
+    titles = [entry.title for entry in template.entries]
     for idx, title in enumerate(titles):
-        if current_state == getattr(form, title):
+        if current_state == getattr(template.form, title):
             return idx
 
 

@@ -1,10 +1,14 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Generator
+
+from aiogram.fsm.state import StatesGroup
 
 from src.logger import Logger
-from src.utils import Modes
+from src.utils import CombinedMeta, Modes
+
+# from typing import Generator
+
 
 logger = Logger(__name__)
 
@@ -28,16 +32,26 @@ class Template:
     def description(self) -> str:
         return self._description
 
-    @property
-    def entries(self) -> Generator[Entry, None, None]:
-        for entry in self._entries:
-            yield entry
+    # @property
+    # def entries(self) -> Generator[Entry, None, None]:
+    #     for entry in self._entries:
+    #         yield entry
 
-    def get_entries(self) -> list[Entry]:
+    @property
+    def entries(self) -> list[Entry]:
         return self._entries
 
     def __repr__(self) -> str:
-        return f"Form title='{self.title}' | description='{self.description}' | entries='{self.get_entries()}'"
+        return f"Form title='{self.title}' | description='{self.description}' | entries='{self.entries}'"
+
+    @property
+    def form(self) -> CombinedMeta:
+        titles = [entry.title for entry in self.entries]
+
+        class Form(StatesGroup, metaclass=CombinedMeta, titles=titles):
+            pass
+
+        return Form
 
 
 class Entry:
