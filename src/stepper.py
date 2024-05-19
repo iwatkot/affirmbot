@@ -11,6 +11,7 @@ class Stepper:
     def __init__(self, template: Template, state: FSMContext, message: Message = None):
         self._template = template
         self._titles = [entry.title for entry in self._template.entries]
+        self._steps = len(self._template.entries)
         self._state = state
         self._message = message
         self._step = 0
@@ -32,14 +33,14 @@ class Stepper:
     def step(self, value: int) -> None:
         self._step = value
 
-    # @property
-    # def state(self) -> FSMContext:
-    #     return self._state
+    @property
+    def state(self) -> FSMContext:
+        return self._state
 
-    # @state.setter
-    # def state(self, value: FSMContext) -> None:
-    #     self._state = value
-    #     self._step = self._detect_step()
+    @state.setter
+    def state(self, value: FSMContext) -> None:
+        self._state = value
+        self._step = self._detect_step()
 
     @property
     def current_state(self) -> str:
@@ -62,11 +63,28 @@ class Stepper:
         self.step += 1
         logger.debug(f"Moving forward to step {self.step}...")
 
+    async def update(self, state: FSMContext, message: Message) -> None:
+        self._state = state
+        self._current_state = await self._state.get_state()
+        logger.debug(f"Current state updated to {self._current_state}...")
+        self._message = message
+
+        await self._state.update_data(**self.data)
+
+    async def close(self) -> None:
+        data = await self._state.get_data()
+        await self._message.answer(f"Data: {data}")
+        await self._state.clear()
+
     async def _update_state(self) -> None:
         await self._state.set_state(getattr(self._template.form, self._get_entry_title()))
 
     async def _send_answer(self) -> None:
         await self._message.answer(self._prepare_message())
+
+    @property
+    def ended(self) -> bool:
+        return self.step == self._steps
 
     def _prepare_message(self) -> str:
         entry = self._template.get_entry(self.step)

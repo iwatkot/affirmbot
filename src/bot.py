@@ -8,7 +8,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
 
 import src.globals as g
-from src.decorators import handle_errors, routers
+from src.decorators import handle_errors, log_message, routers
 from src.logger import Logger
 from src.settings import Settings
 from src.stepper import Stepper
@@ -16,28 +16,25 @@ from src.stepper import Stepper
 logger = Logger(__name__)
 settings = Settings(g.ADMINS)
 dp = Dispatcher()
-form_router = Router()
+router = Router()
 
 
-@form_router.message(CommandStart())
+@router.message(CommandStart())
+@log_message
 @handle_errors
 async def command_start(message: Message, state: FSMContext) -> None:
     template = settings.get_template()
     stepper = Stepper(template, state, message)
     await stepper.start()
 
-    @routers(form_router, template)
+    @routers(router, template)
     @handle_errors
     async def process_name(message: Message, state: FSMContext) -> None:
-        current_state = await state.get_state()
-        stepper.current_state = current_state
-        stepper.message = message
+        # TODO: Implement answer validation.
+        await stepper.update(state, message)
 
-        await state.update_data(**stepper.data)
-
-        if stepper.step == len(template.entries):
-            data = await state.get_data()
-            await message.answer(f"Data: {data}")
+        if stepper.ended:
+            await stepper.close()
             return
 
         await stepper.forward()
@@ -46,7 +43,7 @@ async def command_start(message: Message, state: FSMContext) -> None:
 @handle_errors
 async def main() -> None:
     bot = Bot(token=g.TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
-    dp.include_router(form_router)
+    dp.include_router(router)
     await dp.start_polling(bot)
 
 
