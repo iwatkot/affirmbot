@@ -6,6 +6,7 @@ class Settings:
     def __init__(self, admins: list[int], active_template: int = 1):
         self._admins = admins
         self._active_template = active_template
+        self._channel = None
 
     def get_template(self) -> Template | None:
         return g.config.get_template(template_idx=self._active_template)

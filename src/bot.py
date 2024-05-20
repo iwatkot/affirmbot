@@ -9,14 +9,11 @@ from aiogram.types import Message
 
 import src.globals as g
 from src.content import Buttons
-from src.decorators import handle_errors, log_message, routers
+from src.decorators import admin_only, handle_errors, log_message, routers
 from src.logger import Logger
-
-# from src.settings import Settings
 from src.stepper import Stepper
 
 logger = Logger(__name__)
-# settings = Settings(g.ADMINS)
 dp = Dispatcher()
 router = Router()
 
@@ -26,6 +23,23 @@ async def start(message: Message) -> None:
     await message.answer(
         g.config.welcome,
         reply_markup=Buttons.main_menu(message),
+    )
+
+
+@dp.message(Buttons.back_button())
+async def back(message: Message) -> None:
+    await message.answer(
+        "Back",
+        reply_markup=Buttons.main_menu(message),
+    )
+
+
+@dp.message(Buttons.settings_button())
+@admin_only
+async def test(message: Message) -> None:
+    await message.answer(
+        "Settings",
+        reply_markup=Buttons.settings_menu(message),
     )
 
 

@@ -5,6 +5,7 @@ from functools import wraps
 
 from aiogram import Router
 
+import src.globals as g
 from src.logger import LOG_DIR, Logger
 from src.template import Template
 
@@ -33,6 +34,20 @@ def log_message(func):
             f"Message: {message.text}"
         )
         return await func(message, *args, **kwargs)
+
+    return wrapper
+
+
+def admin_only(func):
+    @wraps(func)
+    async def wrapper(message, *args, **kwargs):
+        if g.settings.is_admin(message.from_user.id):
+            return await func(message, *args, **kwargs)
+        else:
+            logger.warning(
+                f"User {message.from_user.id} tried to access admin-only command: {message.text}"
+            )
+            return
 
     return wrapper
 
