@@ -4,6 +4,7 @@ from dotenv import load_dotenv
 
 from src.config import Config
 from src.logger import Logger
+from src.settings import Settings
 from src.utils import EnvVars, env_to_list
 
 logger = Logger(__name__)
@@ -49,3 +50,5 @@ except ValueError as e:
     logger.error(f"Failed to load config: {e}, will use default config.")
     config = Config(DEFAULT_CONFIG)
 logger.info(f"Loaded {len(config.templates)} templates: {config.templates}")
+
+settings = Settings(ADMINS)

@@ -21,3 +21,6 @@ class Settings:
     @active_template.setter
     def active_template(self, value: int) -> None:
         self._active_template = value
+
+    def is_admin(self, user_id: int) -> bool:
+        return user_id in self._admins

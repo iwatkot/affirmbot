@@ -8,27 +8,32 @@ from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
 
 import src.globals as g
+from src.content import Buttons
 from src.decorators import handle_errors, log_message, routers
 from src.logger import Logger
-from src.settings import Settings
+
+# from src.settings import Settings
 from src.stepper import Stepper
 
 logger = Logger(__name__)
-settings = Settings(g.ADMINS)
+# settings = Settings(g.ADMINS)
 dp = Dispatcher()
 router = Router()
 
 
 @dp.message(CommandStart())
 async def start(message: Message) -> None:
-    await message.answer(g.config.welcome)
+    await message.answer(
+        g.config.welcome,
+        reply_markup=Buttons.main_menu(message),
+    )
 
 
 @router.message(Command("form"))
 @log_message
 @handle_errors
 async def command_start(message: Message, state: FSMContext) -> None:
-    template = settings.get_template()
+    template = g.settings.get_template()
     stepper = Stepper(message, state, template)
     await stepper.start()
 
