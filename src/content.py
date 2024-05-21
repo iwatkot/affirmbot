@@ -17,33 +17,33 @@ class AnswersRU:
 
 
 class ButtonsEN:
-    MAIN_MENU = "🏠 Main menu"
+    BUTTON_MAIN_MENU = "🏠 Main menu"
     """"""
-    SETTINGS = "⚙️ Settings"
-    FORMS = "📝 Forms"
+    BUTTON_SETTINGS = "⚙️ Settings"
+    BUTTON_FORMS = "📝 Forms"
     """"""
-    MENU_MAIN = [FORMS]
-    MENU_MAIN_ADMIN = [FORMS, SETTINGS]
+    MENU_MAIN = [BUTTON_FORMS]
+    MENU_MAIN_ADMIN = [BUTTON_FORMS, BUTTON_SETTINGS]
     """"""
-    ADMINS_BUTTON = "👮‍♀️ Manage admins"
-    CHANNEL_BUTTON = "📡 Manage channel"
+    BUTTON_ADMINS = "👮‍♀️ Manage admins"
+    BUTTON_CHANNELS = "📡 Manage channel"
     """"""
-    MENU_SETTINGS = [ADMINS_BUTTON, CHANNEL_BUTTON, MAIN_MENU]
+    MENU_SETTINGS = [BUTTON_ADMINS, BUTTON_CHANNELS, BUTTON_MAIN_MENU]
 
 
 class ButtonsRU:
-    MAIN_MENU = "🏠 Главное меню"
+    BUTTON_MAIN_MENU = "🏠 Главное меню"
     """"""
-    SETTINGS = "⚙️ Настройки"
-    FORMS = "📝 Формы"
+    BUTTON_SETTINGS = "⚙️ Настройки"
+    BUTTON_FORMS = "📝 Формы"
     """"""
-    MENU_MAIN = [FORMS]
-    MENU_MAIN_ADMIN = [FORMS, SETTINGS]
+    MENU_MAIN = [BUTTON_FORMS]
+    MENU_MAIN_ADMIN = [BUTTON_FORMS, BUTTON_SETTINGS]
     """"""
-    ADMINS_BUTTON = "👮‍♀️ Управление админами"
-    CHANNEL_BUTTON = "📡 Управление каналом"
+    BUTTON_ADMINS = "👮‍♀️ Управление админами"
+    BUTTON_CHANNELS = "📡 Управление каналом"
     """"""
-    MENU_SETTINGS = [ADMINS_BUTTON, CHANNEL_BUTTON, MAIN_MENU]
+    MENU_SETTINGS = [BUTTON_ADMINS, BUTTON_CHANNELS, BUTTON_MAIN_MENU]
 
 
 class BaseMarkup:
@@ -72,11 +72,11 @@ class BaseMarkup:
 class Buttons(BaseMarkup):
     @property
     def settings(self) -> list[str]:
-        return self.button_in("SETTINGS")
+        return self.button_in("BUTTON_SETTINGS")
 
     @property
     def main_menu(self) -> list[str]:
-        return self.button_in("MAIN_MENU")
+        return self.button_in("BUTTON_MAIN_MENU")
 
     def button_in(self, attribute: str) -> F:
         buttons = [getattr(locale, attribute) for locale in self.locales.values()]
