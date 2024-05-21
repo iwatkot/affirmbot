@@ -8,7 +8,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
 
 import src.globals as g
-from src.content import Buttons
+from src.content import Answer, Button, Menu
 from src.decorators import admin_only, handle_errors, log_message, routers
 from src.logger import Logger
 from src.stepper import Stepper
@@ -22,24 +22,24 @@ router = Router()
 async def start(message: Message) -> None:
     await message.answer(
         g.config.welcome,
-        reply_markup=Buttons.main_menu(message),
+        reply_markup=Menu.main(message),
     )
 
 
-@dp.message(Buttons.back_button())
+@dp.message(Button.main_menu)
 async def back(message: Message) -> None:
     await message.answer(
-        "Back",
-        reply_markup=Buttons.main_menu(message),
+        Answer.main_menu(message),
+        reply_markup=Menu.main(message),
     )
 
 
-@dp.message(Buttons.settings_button())
+@dp.message(Button.settings)
 @admin_only
-async def test(message: Message) -> None:
+async def settings(message: Message) -> None:
     await message.answer(
-        "Settings",
-        reply_markup=Buttons.settings_menu(message),
+        Answer.settings(message),
+        reply_markup=Menu.settings(message),
     )
 
 
