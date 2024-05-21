@@ -7,8 +7,9 @@ from aiogram.filters import Command, CommandStart
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
 
+import src.content as content
 import src.globals as g
-from src.content import Answer, Button, Menu
+from src.content import Event
 from src.decorators import admin_only, handle_errors, log_message, routers
 from src.logger import Logger
 from src.stepper import Stepper
@@ -19,54 +20,39 @@ router = Router()
 bot = Bot(token=g.TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
 
 
-@dp.message(CommandStart())
-async def start(message: Message) -> None:
+def event(event: Event):
+    def decorator(func):
+        @dp.message(event.button())
+        async def wrapper(message) -> None:
+            return await func(message, event)
+
+        return wrapper
+
+    return decorator
+
+
+@event(content.Start)
+async def start(message: Message, event: Event) -> None:
     await message.answer(
-        g.config.welcome,
-        reply_markup=Menu.main(message),
+        event.answer(),
+        reply_markup=event.menu(message=message),
     )
 
 
-@dp.message(Button.main_menu)
-async def back(message: Message) -> None:
+@event(content.MainMenu)
+async def main_menu(message: Message, event: Event) -> None:
     await message.answer(
-        Answer.main_menu(message),
-        reply_markup=Menu.main(message),
+        event.answer(),
+        reply_markup=event.menu(message=message),
     )
 
 
-@dp.message(Button.cancel)
-async def cancel(message: Message) -> None:
-    await message.answer(
-        Answer.cancel(message),
-        reply_markup=Menu.main(message),
-    )
-
-
-@dp.message(Button.settings)
+@event(content.Settings)
 @admin_only
-async def settings(message: Message) -> None:
+async def settings(message: Message, event: Event) -> None:
     await message.answer(
-        Answer.settings(message),
-        reply_markup=Menu.settings(message),
-    )
-
-
-@dp.message(Button.channel)
-@admin_only
-async def channel(message: Message) -> None:
-    await message.answer(
-        Answer.channel(message),
-        reply_markup=Menu.channel(message),
-    )
-
-
-@dp.message(Button.edit_channel)
-@admin_only
-async def edit_channel(message: Message) -> None:
-    await message.answer(
-        Answer.edit_channel(message),
-        reply_markup=Menu.edit_channel(message),
+        event.answer(),
+        reply_markup=event.menu(message=message),
     )
 
 
