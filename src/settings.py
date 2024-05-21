@@ -25,3 +25,7 @@ class Settings:
 
     def is_admin(self, user_id: int) -> bool:
         return user_id in self._admins
+
+    @property
+    def channel(self) -> str | None:
+        return self._channel

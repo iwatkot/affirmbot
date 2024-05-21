@@ -16,6 +16,7 @@ from src.stepper import Stepper
 logger = Logger(__name__)
 dp = Dispatcher()
 router = Router()
+bot = Bot(token=g.TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
 
 
 @dp.message(CommandStart())
@@ -34,12 +35,38 @@ async def back(message: Message) -> None:
     )
 
 
+@dp.message(Button.cancel)
+async def cancel(message: Message) -> None:
+    await message.answer(
+        Answer.cancel(message),
+        reply_markup=Menu.main(message),
+    )
+
+
 @dp.message(Button.settings)
 @admin_only
 async def settings(message: Message) -> None:
     await message.answer(
         Answer.settings(message),
         reply_markup=Menu.settings(message),
+    )
+
+
+@dp.message(Button.channel)
+@admin_only
+async def channel(message: Message) -> None:
+    await message.answer(
+        Answer.channel(message),
+        reply_markup=Menu.channel(message),
+    )
+
+
+@dp.message(Button.edit_channel)
+@admin_only
+async def edit_channel(message: Message) -> None:
+    await message.answer(
+        Answer.edit_channel(message),
+        reply_markup=Menu.edit_channel(message),
     )
 
 
@@ -68,7 +95,6 @@ async def command_start(message: Message, state: FSMContext) -> None:
 
 @handle_errors
 async def main() -> None:
-    bot = Bot(token=g.TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
     dp.include_router(router)
     await dp.start_polling(bot)
 
