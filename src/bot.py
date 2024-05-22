@@ -5,18 +5,19 @@ from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
-from aiogram.types import Message
+from aiogram.types import CallbackQuery, Message
 
 import src.globals as g
 from src.decorators import (
     admin_only,
+    callback,
     event_router,
     events,
     handle_errors,
     log_message,
     routers,
 )
-from src.event import AdminGroup, Event, MenuGroup
+from src.event import AddAdmin, AdminGroup, Callback, Event, MenuGroup
 from src.logger import Logger
 from src.stepper import Stepper
 
@@ -32,7 +33,7 @@ async def menu_group(message: Message, event: Event) -> None:
         event.answer,
         reply_markup=event.menu,
     )
-    await event.process(message)
+    await event.process()
 
 
 @events(AdminGroup)
@@ -42,7 +43,7 @@ async def settings(message: Message, event: Event) -> None:
         event.answer,
         reply_markup=event.menu,
     )
-    await event.process(message)
+    await event.process()
 
 
 @router.message(Command("form"))
@@ -66,6 +67,16 @@ async def command_start(message: Message, state: FSMContext) -> None:
             return
 
         await stepper.forward()
+
+
+@callback(AddAdmin)
+@admin_only
+async def add_admin(query: CallbackQuery, callback: Callback):
+    await bot.send_message(
+        query.from_user.id,
+        callback.answer,
+    )
+    await callback.process()
 
 
 @handle_errors

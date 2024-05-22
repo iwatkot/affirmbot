@@ -1,5 +1,6 @@
 from aiogram import F
 from aiogram.types import (
+    CallbackQuery,
     InlineKeyboardButton,
     InlineKeyboardMarkup,
     KeyboardButton,
@@ -21,6 +22,7 @@ class Event:
     BUTTON_ADMINS = "👥 Admins"
 
     def __init__(self, message: Message) -> None:
+        self._message = message
         self._is_admin = g.settings.is_admin(message.from_user.id)
 
     @property
@@ -43,7 +45,11 @@ class Event:
     def answer(self) -> str:
         return self._answer
 
-    async def process(self, message: Message, *args, **kwargs) -> None:
+    @property
+    def message(self) -> Message:
+        return self._message
+
+    async def process(self, *args, **kwargs) -> None:
         pass
 
 
@@ -72,16 +78,43 @@ class Admins(Event):
     )
     _menu = []
 
-    async def process(self, message: Message, *args, **kwargs) -> None:
-        other_admins = [admin for admin in g.settings.admins if admin != message.from_user.id]
+    async def process(self, *args, **kwargs) -> None:
+        other_admins = [admin for admin in g.settings.admins if admin != self.message.from_user.id]
         if not other_admins:
             reply = "You are the only admin."
         else:
             reply = "List of admins:"
 
-        data = {f"Remove admin with ID: {admin}": f"remove_admin_{admin}" for admin in other_admins}
-        data.update({"Add new admin": "add_admin"})
-        await message.answer(reply, reply_markup=self.inlines(data))
+        data = {
+            f"➖ Remove admin with ID: {admin}": f"remove_admin_{admin}" for admin in other_admins
+        }
+        data.update({AddAdmin._text: AddAdmin._callback})
+        await self.message.answer(reply, reply_markup=self.inlines(data))
+
+
+class Callback:
+    @classmethod
+    def callback(cls) -> F:
+        return F.data.startswith(cls._callback)
+
+    def __init__(self, query: CallbackQuery):
+        data = query.data.replace(self._callback, "")
+        self._data = None if not data else self._data_type(data)
+
+    @property
+    def data(self):
+        return self._data
+
+    @property
+    def answer(self) -> str:
+        return self._answer
+
+
+class AddAdmin(Callback):
+    _text = "➕ Add new admin"
+    _callback = "add_admin"
+    _data_type = int
+    _answer = "Enter the ID of the user you want to add as an admin."
 
 
 class EventGroup:

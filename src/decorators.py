@@ -2,9 +2,10 @@ import traceback
 from functools import wraps
 
 from aiogram import Router
+from aiogram.types import CallbackQuery, Message
 
 import src.globals as g
-from event import Event, EventGroup
+from event import Callback, Event, EventGroup
 from src.logger import Logger
 from src.template import Template
 
@@ -38,13 +39,11 @@ def log_message(func):
 
 def admin_only(func):
     @wraps(func)
-    async def wrapper(message, *args, **kwargs):
+    async def wrapper(message: Message | CallbackQuery, *args, **kwargs):
         if g.settings.is_admin(message.from_user.id):
             return await func(message, *args, **kwargs)
         else:
-            logger.warning(
-                f"User {message.from_user.id} tried to access admin-only command: {message.text}"
-            )
+            logger.warning(f"User {message.from_user.id} tried to access admin-only command.")
             return
 
     return wrapper
@@ -68,7 +67,7 @@ def handle_errors(func):
 def event(event: Event):
     def decorator(func):
         @event_router.message(event.button())
-        async def wrapper(message) -> None:
+        async def wrapper(message: Message) -> None:
             return await func(message, event(message))
 
         return wrapper
@@ -79,8 +78,19 @@ def event(event: Event):
 def events(events: EventGroup):
     def decorator(func):
         @event_router.message(events.buttons())
-        async def wrapper(message) -> None:
+        async def wrapper(message: Message) -> None:
             return await func(message, events.event(message))
+
+        return wrapper
+
+    return decorator
+
+
+def callback(callback: Callback):
+    def decorator(func):
+        @event_router.callback_query(callback.callback())
+        async def wrapper(query: CallbackQuery) -> None:
+            return await func(query, callback(query))
 
         return wrapper
 
