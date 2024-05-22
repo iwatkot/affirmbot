@@ -10,14 +10,13 @@ from aiogram.types import Message
 import src.globals as g
 from src.decorators import (
     admin_only,
-    event,
     event_router,
     events,
     handle_errors,
     log_message,
     routers,
 )
-from src.event import Event, MenuGroup, Settings
+from src.event import AdminGroup, Event, MenuGroup
 from src.logger import Logger
 from src.stepper import Stepper
 
@@ -33,15 +32,17 @@ async def menu_group(message: Message, event: Event) -> None:
         event.answer,
         reply_markup=event.menu,
     )
+    await event.process(message)
 
 
-@event(Settings)
+@events(AdminGroup)
 @admin_only
 async def settings(message: Message, event: Event) -> None:
     await message.answer(
         event.answer,
         reply_markup=event.menu,
     )
+    await event.process(message)
 
 
 @router.message(Command("form"))

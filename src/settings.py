@@ -13,7 +13,7 @@ class Settings:
 
     @property
     def admins(self) -> list[int]:
-        return self._admins
+        return self._admins.copy()
 
     @property
     def active_template(self) -> int:
