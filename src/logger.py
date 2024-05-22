@@ -1,12 +1,16 @@
 import logging
 import os
 import sys
+import traceback
 from datetime import datetime
+
+from src.utils import make_dirs
 
 LOG_LEVEL = os.getenv("LOG_LEVEL", logging.DEBUG)
 LOG_FORMATTER = "%(name)s | %(asctime)s | %(levelname)s | %(message)s"
 LOG_DIR = os.path.join(os.getcwd(), "logs")
-os.makedirs(LOG_DIR, exist_ok=True)
+TB_DIR = os.path.join(LOG_DIR, "tracebacks")
+make_dirs([LOG_DIR, TB_DIR])
 
 
 class Logger(logging.getLoggerClass()):
@@ -35,3 +39,11 @@ class Logger(logging.getLoggerClass()):
         today = datetime.now().strftime("%Y-%m-%d")
         log_file = os.path.join(self.log_dir, f"{today}.txt")
         return log_file
+
+    def dump_traceback(self, tb: traceback) -> None:
+        timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+        save_path = os.path.join(TB_DIR, f"{timestamp}.txt")
+        with open(save_path, "w") as f:
+            f.write(tb)
+
+        self.info(f"Traceback saved to {save_path}")

@@ -1,17 +1,15 @@
-import os
 import traceback
-from datetime import datetime
 from functools import wraps
 
 from aiogram import Router
 
 import src.globals as g
-from src.logger import LOG_DIR, Logger
+from event import Event, EventGroup
+from src.logger import Logger
 from src.template import Template
 
 logger = Logger(__name__)
-TB_DIR = os.path.join(LOG_DIR, "tracebacks")
-os.makedirs(TB_DIR, exist_ok=True)
+event_router = Router(name="event_router")
 
 
 def routers(router: Router, template: Template) -> callable:
@@ -60,17 +58,30 @@ def handle_errors(func):
         except Exception as e:
             logger.error(f"An error occurred in {func.__module__}.{func.__name__}: {repr(e)}")
             try:
-                dump_traceback(traceback.format_exc())
+                logger.dump_traceback(traceback.format_exc())
             except Exception:
                 pass
 
     return wrapper
 
 
-def dump_traceback(tb: traceback) -> None:
-    timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-    save_path = os.path.join(TB_DIR, f"{timestamp}.txt")
-    with open(save_path, "w") as f:
-        f.write(tb)
+def event(event: Event):
+    def decorator(func):
+        @event_router.message(event.button())
+        async def wrapper(message) -> None:
+            return await func(message, event(message))
 
-    logger.error(f"Traceback saved to {save_path}")
+        return wrapper
+
+    return decorator
+
+
+def events(events: EventGroup):
+    def decorator(func):
+        @event_router.message(events.buttons())
+        async def wrapper(message) -> None:
+            return await func(message, events.event(message))
+
+        return wrapper
+
+    return decorator

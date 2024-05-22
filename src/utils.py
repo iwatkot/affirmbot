@@ -45,3 +45,13 @@ class FormMeta(type):
 
 class CombinedMeta(FormMeta, type(StatesGroup)):
     pass
+
+
+def make_dirs(dirs: list[str]) -> None:
+    """Create multiple directories
+
+    Args:
+        dirs (list[str]): List of directories
+    """
+    for dir in dirs:
+        os.makedirs(dir, exist_ok=True)
