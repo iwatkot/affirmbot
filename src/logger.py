@@ -1,5 +1,6 @@
 import logging
 import os
+import shutil
 import sys
 import traceback
 from datetime import datetime
@@ -10,7 +11,8 @@ LOG_LEVEL = os.getenv("LOG_LEVEL", logging.DEBUG)
 LOG_FORMATTER = "%(name)s | %(asctime)s | %(levelname)s | %(message)s"
 LOG_DIR = os.path.join(os.getcwd(), "logs")
 TB_DIR = os.path.join(LOG_DIR, "tracebacks")
-make_dirs([LOG_DIR, TB_DIR])
+ARCHIVES_DIR = os.path.join(LOG_DIR, "archives")
+make_dirs([LOG_DIR, TB_DIR, ARCHIVES_DIR])
 
 
 class Logger(logging.getLoggerClass()):
@@ -47,3 +49,8 @@ class Logger(logging.getLoggerClass()):
             f.write(tb)
 
         self.info(f"Traceback saved to {save_path}")
+
+    def archive_logs(self) -> str:
+        save_path = os.path.join(ARCHIVES_DIR, f"{datetime.now().strftime('%Y-%m-%d')}.zip")
+        shutil.make_archive(save_path, "zip", self.log_dir)
+        return save_path
