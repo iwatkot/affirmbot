@@ -2,6 +2,7 @@ import traceback
 from functools import wraps
 
 from aiogram import Router
+from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, Message
 
 import src.globals as g
@@ -13,12 +14,12 @@ logger = Logger(__name__)
 event_router = Router(name="event_router")
 
 
-def routers(router: Router, template: Template) -> callable:
+def form(template: Template) -> callable:
     attributes = [getattr(template.form, entry.title) for entry in template.entries]
 
     def decorator(func: callable) -> callable:
         for attr in reversed(attributes):
-            func = router.message(attr)(func)
+            func = event_router.message(attr)(func)
         return func
 
     return decorator
@@ -39,11 +40,11 @@ def log_message(func):
 
 def admin_only(func):
     @wraps(func)
-    async def wrapper(message: Message | CallbackQuery, *args, **kwargs):
-        if g.settings.is_admin(message.from_user.id):
-            return await func(message, *args, **kwargs)
+    async def wrapper(event: Event, *args, **kwargs):
+        if event.is_admin:
+            return await func(event, *args, **kwargs)
         else:
-            logger.warning(f"User {message.from_user.id} tried to access admin-only command.")
+            logger.warning(f"User {event.message.from_user.id} tried to access admin-only command.")
             return
 
     return wrapper
@@ -67,8 +68,8 @@ def handle_errors(func):
 def event(event: Event):
     def decorator(func):
         @event_router.message(event.button())
-        async def wrapper(message: Message) -> None:
-            return await func(message, event(message))
+        async def wrapper(message: Message, state: FSMContext) -> None:
+            return await func(message, event(message, state))
 
         return wrapper
 
@@ -78,8 +79,8 @@ def event(event: Event):
 def events(events: EventGroup):
     def decorator(func):
         @event_router.message(events.buttons())
-        async def wrapper(message: Message) -> None:
-            return await func(message, events.event(message))
+        async def wrapper(message: Message, state: FSMContext) -> None:
+            return await func(events.event(message, state))
 
         return wrapper
 
@@ -90,7 +91,7 @@ def callback(callback: Callback):
     def decorator(func):
         @event_router.callback_query(callback.callback())
         async def wrapper(query: CallbackQuery) -> None:
-            return await func(query, callback(query))
+            return await func(callback(query))
 
         return wrapper
 

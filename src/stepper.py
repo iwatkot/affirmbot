@@ -1,6 +1,7 @@
 from aiogram.fsm.context import FSMContext
-from aiogram.types import Message
+from aiogram.types import CallbackQuery, KeyboardButton, Message, ReplyKeyboardMarkup
 
+from src.event import Cancel
 from src.logger import Logger
 from src.template import Template
 
@@ -64,8 +65,13 @@ class Stepper:
         self.step += 1
         logger.debug(f"Moving forward to step {self.step}...")
 
-    async def validate(self, message: Message) -> bool:
-        correct = self.entry.validate_answer(message)
+    async def validate(self, message: Message | CallbackQuery) -> bool:
+        content = message.text if isinstance(message, Message) else message.data
+
+        if content == Cancel._button:
+            pass
+
+        correct = self.entry.validate_answer(content)
         if not correct:
             await message.answer(self.entry.incorrect)
             return False
@@ -88,7 +94,15 @@ class Stepper:
         await self._state.set_state(getattr(self._template.form, self._get_entry_title()))
 
     async def _send_answer(self) -> None:
-        await self._message.answer(self._prepare_message())
+        entry = self._template.get_entry(self.step)
+        if entry.options:
+            keyboard = [
+                [KeyboardButton(text=option)] for option in entry.options + [Cancel._button]
+            ]
+            reply_markup = ReplyKeyboardMarkup(keyboard=keyboard, resize_keyboard=True)
+        else:
+            reply_markup = None
+        await self._message.answer(self._prepare_message(), reply_markup=reply_markup)
 
     @property
     def ended(self) -> bool:

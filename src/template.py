@@ -3,7 +3,6 @@ from __future__ import annotations
 from datetime import datetime
 
 from aiogram.fsm.state import StatesGroup
-from aiogram.types import Message
 
 import src.globals as g
 from src.logger import Logger
@@ -81,7 +80,7 @@ class Entry:
     def __repr__(self) -> str:
         return f"Entry title='{self.title}' | description='{self.description}' | options='{self.options}'"
 
-    def validate_answer(self, message: Message) -> bool:
+    def validate_answer(self, content: str) -> bool:
         raise NotImplementedError
 
 
@@ -89,10 +88,9 @@ class TextEntry(Entry):
     def __init__(self, title: str, incorrect: str, description: str = None, **kwargs):
         super().__init__(title, incorrect, description, **kwargs)
 
-    def validate_answer(self, message: Message) -> bool:
-        answer = message.text
+    def validate_answer(self, content: str) -> bool:
         try:
-            assert isinstance(answer, str)
+            assert isinstance(content, str)
             return True
         except AssertionError:
             return False
@@ -103,14 +101,13 @@ class DateEntry(Entry):
     def __init__(self, title: str, incorrect: str, description: str = None, **kwargs):
         super().__init__(title, incorrect, description, **kwargs)
 
-    def validate_answer(self, message: Message) -> bool:
+    def validate_answer(self, content: str) -> bool:
         if g.is_development:
             return True
-        answer = message.text
         date_formats = ["%Y-%m-%d", "%d-%m-%Y", "%m-%d-%Y", "%Y.%m.%d", "%d.%m.%Y", "%m.%d.%Y"]
         for date_format in date_formats:
             try:
-                datetime.strptime(answer, date_format)
+                datetime.strptime(content, date_format)
                 return True
             except ValueError:
                 continue
@@ -129,8 +126,7 @@ class OneOfEntry(Entry):
     ):
         super().__init__(title, incorrect, description, options, **kwargs)
 
-    def validate_answer(self, message: Message) -> bool:
+    def validate_answer(self, content: str) -> bool:
         if g.is_development:
             return True
-        answer = message.text
-        return answer in self.options
+        return content in self.options

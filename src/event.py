@@ -1,4 +1,5 @@
 from aiogram import F
+from aiogram.fsm.context import FSMContext
 from aiogram.types import (
     CallbackQuery,
     InlineKeyboardButton,
@@ -16,18 +17,23 @@ logger = Logger(__name__)
 
 class Event:
     BUTTON_MAIN_MENU = "🏠 Main Menu"
+    BUTTON_CANCEL = "❌ Cancel"
     BUTTON_FORMS = "📝 Forms"
     """ADMIN BUTTONS"""
     BUTTON_SETTINGS = "⚙️ Settings"
     BUTTON_ADMINS = "👥 Admins"
 
-    def __init__(self, message: Message) -> None:
+    def __init__(self, message: Message, state: FSMContext) -> None:
         self._message = message
-        self._is_admin = g.settings.is_admin(message.from_user.id)
+        self._state = state
+        self._user_id = message.from_user.id
+        self._is_admin = g.settings.is_admin(self._user_id)
 
     @property
     def menu(self) -> ReplyKeyboardMarkup:
-        buttons = self._menu + getattr(self, "_admin", [])
+        buttons = self._menu
+        if self.is_admin:
+            buttons += getattr(self, "_admin", [])
         keyboard = [[KeyboardButton(text=button)] for button in buttons]
         return ReplyKeyboardMarkup(keyboard=keyboard, resize_keyboard=True)
 
@@ -46,8 +52,20 @@ class Event:
         return self._answer
 
     @property
+    def is_admin(self) -> bool:
+        return self._is_admin
+
+    @property
+    def user_id(self) -> int:
+        return self._user_id
+
+    @property
     def message(self) -> Message:
         return self._message
+
+    @property
+    def state(self) -> FSMContext:
+        return self._state
 
     async def process(self, *args, **kwargs) -> None:
         pass
@@ -63,6 +81,11 @@ class MainMenu(Event):
 class Start(MainMenu):
     _button = "/start"
     _answer = g.config.welcome
+
+
+class Cancel(MainMenu):
+    _button = Event.BUTTON_CANCEL
+    _answer = "Operation canceled."
 
 
 class Settings(Event):
@@ -99,11 +122,26 @@ class Callback:
 
     def __init__(self, query: CallbackQuery):
         data = query.data.replace(self._callback, "")
+        self._query = query
         self._data = None if not data else self._data_type(data)
+        self._user_id = query.from_user.id
+        self._is_admin = g.settings.is_admin(self._user_id)
+
+    @property
+    def query(self) -> CallbackQuery:
+        return self._query
 
     @property
     def data(self):
         return self._data
+
+    @property
+    def is_admin(self) -> bool:
+        return self._is_admin
+
+    @property
+    def user_id(self) -> int:
+        return self._user_id
 
     @property
     def answer(self) -> str:
@@ -123,11 +161,11 @@ class EventGroup:
         return F.text.in_([event._button for event in cls._events])
 
     @classmethod
-    def event(cls, message: Message) -> Event:
+    def event(cls, message: Message, state: FSMContext) -> Event:
         for event in cls._events:
             if event._button == message.text:
-                return event(message)
-        return MainMenu(message)
+                return event(message, state)
+        return MainMenu(message, state)
 
 
 class MenuGroup(EventGroup):

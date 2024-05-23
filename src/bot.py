@@ -13,9 +13,9 @@ from src.decorators import (
     callback,
     event_router,
     events,
+    form,
     handle_errors,
     log_message,
-    routers,
 )
 from src.event import AddAdmin, AdminGroup, Callback, Event, MenuGroup
 from src.logger import Logger
@@ -28,8 +28,8 @@ bot = Bot(token=g.TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML)
 
 
 @events(MenuGroup)
-async def menu_group(message: Message, event: Event) -> None:
-    await message.answer(
+async def menu_group(event: Event) -> None:
+    await event.message.answer(
         event.answer,
         reply_markup=event.menu,
     )
@@ -38,8 +38,8 @@ async def menu_group(message: Message, event: Event) -> None:
 
 @events(AdminGroup)
 @admin_only
-async def settings(message: Message, event: Event) -> None:
-    await message.answer(
+async def settings(event: Event) -> None:
+    await event.message.answer(
         event.answer,
         reply_markup=event.menu,
     )
@@ -54,9 +54,9 @@ async def command_start(message: Message, state: FSMContext) -> None:
     stepper = Stepper(message, state, template)
     await stepper.start()
 
-    @routers(router, template)
+    @form(template)
     @handle_errors
-    async def steps(message: Message, state: FSMContext) -> None:
+    async def steps(message: Message | CallbackQuery, state: FSMContext) -> None:
         if not await stepper.validate(message):
             return
 
@@ -71,12 +71,11 @@ async def command_start(message: Message, state: FSMContext) -> None:
 
 @callback(AddAdmin)
 @admin_only
-async def add_admin(query: CallbackQuery, callback: Callback):
+async def add_admin(callback: Callback):
     await bot.send_message(
-        query.from_user.id,
+        callback.user_id,
         callback.answer,
     )
-    await callback.process()
 
 
 @handle_errors
