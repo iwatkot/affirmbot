@@ -24,19 +24,6 @@ def form(template: Template) -> callable:
     return decorator
 
 
-def log_message(func):
-    @wraps(func)
-    async def wrapper(message, *args, **kwargs):
-        logger.debug(
-            f"ID: {message.from_user.id} | "
-            f"Name: {message.from_user.first_name} {message.from_user.last_name} | "
-            f"Message: {message.text}"
-        )
-        return await func(message, *args, **kwargs)
-
-    return wrapper
-
-
 def admin_only(func):
     @wraps(func)
     async def wrapper(event: Event, *args, **kwargs):

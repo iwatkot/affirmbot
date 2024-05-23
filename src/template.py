@@ -17,10 +17,12 @@ class Template:
         title: str,
         description: str = None,
         entries: list[Entry] | list[dict[str, str | list[str]]] = None,
+        complete: str = None,
     ):
         self._title = title
         self._description = description
         self._entries = [Entry.from_json(entry) for entry in entries] if entries else []
+        self._complete = complete
 
     @property
     def title(self) -> str:
@@ -33,6 +35,10 @@ class Template:
     @property
     def entries(self) -> list[Entry]:
         return self._entries
+
+    @property
+    def complete(self) -> str:
+        return self._complete
 
     def get_entry(self, idx: int) -> Entry:
         return self.entries[idx]

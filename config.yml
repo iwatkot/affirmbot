@@ -1,7 +1,8 @@
 welcome: "This bot will ask you some questions. Please answer them to the best of your ability."
 templates:
   - title: "Default Form"
-    description: "This is the default form"
+    description: "This is the default form."
+    complete: "Thank you for completing the form."
     entries:
     - mode: "text"
       title: "Name"

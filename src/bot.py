@@ -15,7 +15,6 @@ from src.decorators import (
     events,
     form,
     handle_errors,
-    log_message,
 )
 from src.event import AddAdmin, AdminGroup, Callback, Event, MenuGroup
 from src.logger import Logger
@@ -47,7 +46,6 @@ async def settings(event: Event) -> None:
 
 
 @router.message(Command("form"))
-@log_message
 @handle_errors
 async def command_start(message: Message, state: FSMContext) -> None:
     template = g.settings.get_template()

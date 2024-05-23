@@ -1,7 +1,7 @@
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, KeyboardButton, Message, ReplyKeyboardMarkup
 
-from src.event import Cancel
+from src.event import Cancel, MainMenu
 from src.logger import Logger
 from src.template import Template
 
@@ -18,6 +18,8 @@ class Stepper:
         self._message = message
         self._step = 0
         self._current_state = None
+        self.main_menu = MainMenu._button
+        self.cancel = Cancel._button
 
     @property
     def message(self) -> Message:
@@ -68,9 +70,6 @@ class Stepper:
     async def validate(self, message: Message | CallbackQuery) -> bool:
         content = message.text if isinstance(message, Message) else message.data
 
-        if content == Cancel._button:
-            pass
-
         correct = self.entry.validate_answer(content)
         if not correct:
             await message.answer(self.entry.incorrect)
@@ -86,8 +85,10 @@ class Stepper:
         await self._state.update_data(**self.data)
 
     async def close(self) -> None:
-        data = await self._state.get_data()
-        await self._message.answer(f"Data: {data}")
+        # data = await self._state.get_data()  # TODO: Process data.
+        await self._message.answer(
+            self._template.complete, reply_markup=self._reply_keyboard([self.main_menu])
+        )
         await self._state.clear()
 
     async def _update_state(self) -> None:
@@ -95,14 +96,15 @@ class Stepper:
 
     async def _send_answer(self) -> None:
         entry = self._template.get_entry(self.step)
-        if entry.options:
-            keyboard = [
-                [KeyboardButton(text=option)] for option in entry.options + [Cancel._button]
-            ]
-            reply_markup = ReplyKeyboardMarkup(keyboard=keyboard, resize_keyboard=True)
-        else:
-            reply_markup = None
-        await self._message.answer(self._prepare_message(), reply_markup=reply_markup)
+        buttons = entry.options if entry.options else []
+        buttons.append(self.cancel)
+        await self._message.answer(
+            self._prepare_message(), reply_markup=self._reply_keyboard(buttons)
+        )
+
+    def _reply_keyboard(self, buttons: list[str]) -> ReplyKeyboardMarkup:
+        keyboard = [[KeyboardButton(text=button)] for button in buttons]
+        return ReplyKeyboardMarkup(keyboard=keyboard, resize_keyboard=True)
 
     @property
     def ended(self) -> bool:

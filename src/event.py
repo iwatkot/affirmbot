@@ -87,6 +87,9 @@ class Cancel(MainMenu):
     _button = Event.BUTTON_CANCEL
     _answer = "Operation canceled."
 
+    async def process(self, *args, **kwargs) -> None:
+        await self.state.clear()
+
 
 class Settings(Event):
     _button = Event.BUTTON_SETTINGS
@@ -169,7 +172,7 @@ class EventGroup:
 
 
 class MenuGroup(EventGroup):
-    _events = [Start, MainMenu]
+    _events = [Start, MainMenu, Cancel]
 
 
 class AdminGroup(EventGroup):
