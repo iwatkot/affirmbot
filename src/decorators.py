@@ -5,7 +5,6 @@ from aiogram import Router
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, Message
 
-import src.globals as g
 from event import Callback, Event, EventGroup
 from src.logger import Logger
 from src.template import Template
