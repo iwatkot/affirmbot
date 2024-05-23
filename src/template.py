@@ -2,11 +2,10 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from aiogram.fsm.state import StatesGroup
-
 import src.globals as g
+from src.form import CombinedMeta, get_form
 from src.logger import Logger
-from src.utils import CombinedMeta, Modes
+from src.utils import Modes
 
 logger = Logger(__name__)
 
@@ -37,6 +36,10 @@ class Template:
         return self._entries
 
     @property
+    def entries_titles(self) -> list[str]:
+        return [entry.title for entry in self.entries]
+
+    @property
     def complete(self) -> str:
         return self._complete
 
@@ -48,12 +51,7 @@ class Template:
 
     @property
     def form(self) -> CombinedMeta:
-        titles = [entry.title for entry in self.entries]
-
-        class Form(StatesGroup, metaclass=CombinedMeta, titles=titles):
-            pass
-
-        return Form
+        return get_form(self.entries_titles)
 
 
 class Entry:

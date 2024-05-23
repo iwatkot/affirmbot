@@ -52,7 +52,7 @@ async def process_form(message: Message, state: FSMContext) -> None:
     stepper = Stepper(message, state, template)
     await stepper.start()
 
-    @form(template)
+    @form(template.entries_titles)
     @handle_errors
     async def steps(message: Message | CallbackQuery, state: FSMContext) -> None:
         if not await stepper.validate(message):

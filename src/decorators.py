@@ -6,15 +6,15 @@ from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, Message
 
 from event import Callback, Event, EventGroup
+from src.form import get_form
 from src.logger import Logger
-from src.template import Template
 
 logger = Logger(__name__)
 event_router = Router(name="event_router")
 
 
-def form(template: Template) -> callable:
-    attributes = [getattr(template.form, entry.title) for entry in template.entries]
+def form(steps: list[str]) -> callable:
+    attributes = [getattr(get_form(steps), step) for step in steps]
 
     def decorator(func: callable) -> callable:
         for attr in reversed(attributes):
