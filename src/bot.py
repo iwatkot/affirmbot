@@ -7,7 +7,6 @@ from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, Message
 
-import src.globals as g
 from src.decorators import (
     admin_only,
     callback,
@@ -17,13 +16,14 @@ from src.decorators import (
     handle_errors,
 )
 from src.event import AddAdmin, AdminGroup, Callback, Event, MenuGroup
+from src.globals import TOKEN, settings
 from src.logger import Logger
 from src.stepper import Stepper
 
 logger = Logger(__name__)
 dp = Dispatcher()
 router = Router(name="main_router")
-bot = Bot(token=g.TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
+bot = Bot(token=TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
 
 
 @events(MenuGroup)
@@ -37,7 +37,7 @@ async def menu_group(event: Event) -> None:
 
 @events(AdminGroup)
 @admin_only
-async def settings(event: Event) -> None:
+async def admin_group(event: Event) -> None:
     await event.message.answer(
         event.answer,
         reply_markup=event.menu,
@@ -47,8 +47,8 @@ async def settings(event: Event) -> None:
 
 @router.message(Command("form"))
 @handle_errors
-async def command_start(message: Message, state: FSMContext) -> None:
-    template = g.settings.get_template()
+async def process_form(message: Message, state: FSMContext) -> None:
+    template = settings.get_template()
     stepper = Stepper(message, state, template)
     await stepper.start()
 
