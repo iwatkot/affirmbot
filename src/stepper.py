@@ -1,3 +1,5 @@
+import asyncio
+
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, KeyboardButton, Message, ReplyKeyboardMarkup
 
@@ -37,6 +39,9 @@ class Stepper:
         self.main_menu = MainMenu._button
         self.cancel = Cancel._button
 
+        self._results = None
+        self._resilts_set = asyncio.Event()
+
     @property
     def message(self) -> Message:
         return self._message
@@ -60,7 +65,6 @@ class Stepper:
 
     @property
     def entry(self) -> Entry:
-        logger.debug(f"Getting entry {self.step} of {len(self._entries)}...")
         return self._entries[self.step - 1]
 
     @property
@@ -90,7 +94,7 @@ class Stepper:
     async def start(self) -> None:
         if self._step == 0:
             await self.forward()
-            await self.register()
+            return await self.register()
         else:
             raise ValueError("Stepper is already started, use forward() method to move forward")
 
@@ -119,14 +123,15 @@ class Stepper:
 
     async def close(self) -> None:
         self._results = await self._state.get_data()
+        self._resilts_set.set()
         logger.debug(f"Saved results: {self._results}...")
         await self._message.answer(
             self._complete, reply_markup=self._reply_keyboard([self.main_menu])
         )
         await self._state.clear()
 
-    @property
-    def results(self) -> dict[str, str]:
+    async def results(self) -> dict[str, str]:
+        await self._resilts_set.wait()
         return self._results
 
     async def _update_state(self) -> None:

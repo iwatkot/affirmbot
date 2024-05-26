@@ -175,6 +175,8 @@ class AddAdmin(Callback):
 
             stepper = Stepper(self.query, self.state, entries=self.entries, complete="Admin added.")
             await stepper.start()
+            results = await stepper.results()
+            print(results)
 
 
 class EventGroup:
