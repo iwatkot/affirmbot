@@ -16,11 +16,14 @@ class Template:
         description: str = None,
         entries: list[Entry] | list[dict[str, str | list[str]]] = None,
         complete: str = None,
+        active: bool = True,
     ):
         self._title = title
         self._description = description
         self._entries = [Entry.from_json(entry) for entry in entries] if entries else []
         self._complete = complete
+        self._active = active
+        self._idx = None
 
     @property
     def title(self) -> str:
@@ -37,6 +40,26 @@ class Template:
     @property
     def complete(self) -> str:
         return self._complete
+
+    @property
+    def active(self) -> bool:
+        return self._active
+
+    @active.setter
+    def active(self, value: bool) -> None:
+        self._active = value
+
+    @property
+    def disable(self) -> bool:
+        self.active = False
+
+    @property
+    def enable(self) -> bool:
+        self.active = True
+
+    @property
+    def is_active(self) -> bool:
+        return self.active
 
     def get_entry(self, idx: int) -> Entry:
         return self.entries[idx]

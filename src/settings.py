@@ -1,15 +1,16 @@
-import src.globals as g
+# import src.globals as g
+from src.config import Config
 from src.template import Template
+from src.utils import Singleton
 
 
-class Settings:
-    def __init__(self, admins: list[int], active_template: int = 1):
+class Settings(metaclass=Singleton):
+    def __init__(self, admins: list[int]):
         self._admins = admins
-        self._active_template = active_template
+        self._templates = Config().templates
+        for idx, template in enumerate(self._templates):
+            template.idx = idx
         self._channel = None
-
-    def get_template(self) -> Template | None:
-        return g.config.get_template(template_idx=self._active_template)
 
     @property
     def admins(self) -> list[int]:
@@ -20,12 +21,8 @@ class Settings:
             self._admins.append(user_id)
 
     @property
-    def active_template(self) -> int:
-        return self._active_template
-
-    @active_template.setter
-    def active_template(self, value: int) -> None:
-        self._active_template = value
+    def active_templates(self) -> list[Template]:
+        return [template for template in self._templates if template.is_active]
 
     def is_admin(self, user_id: int) -> bool:
         return user_id in self._admins

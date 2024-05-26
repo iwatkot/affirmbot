@@ -9,8 +9,11 @@ from aiogram.types import (
     ReplyKeyboardMarkup,
 )
 
-import src.globals as g
+from src.config import Config
+
+# import src.globals as g
 from src.logger import Logger
+from src.settings import Settings
 from src.template import Entry, NumberEntry
 
 logger = Logger(__name__)
@@ -21,7 +24,7 @@ class BaseEvent:
         self._content = content
         self._state = state
         self._user_id = content.from_user.id
-        self._is_admin = g.settings.is_admin(self._user_id)
+        self._is_admin = Settings().is_admin(self._user_id)
 
     @property
     def content(self) -> Message | CallbackQuery:
@@ -42,6 +45,14 @@ class BaseEvent:
     @property
     def answer(self) -> str:
         return self._answer
+
+    async def reply(self, *args, **kwargs):
+        from src.bot import bot
+
+        if isinstance(self.content, Message):
+            await self.content.answer(self.answer, reply_markup=self.menu)
+        elif isinstance(self.content, CallbackQuery):
+            await bot.send_message(self.user_id, self.answer)
 
     async def process(self, *args, **kwargs) -> None:
         if self.entries:
@@ -97,7 +108,7 @@ class MainMenu(Event):
 
 class Start(MainMenu):
     _button = "/start"
-    _answer = g.config.welcome
+    _answer = Config().welcome
 
 
 class Cancel(MainMenu):
@@ -108,7 +119,7 @@ class Cancel(MainMenu):
         await self.state.clear()
 
 
-class Settings(Event):
+class SettingsMenu(Event):
     _button = Event.BUTTON_SETTINGS
     _answer = "In this section you can change the settings of the bot."
     _menu = [Event.BUTTON_ADMINS, Event.BUTTON_MAIN_MENU]
@@ -122,16 +133,26 @@ class Admins(Event):
     _menu = []
 
     async def process(self, *args, **kwargs) -> None:
-        other_admins = [admin for admin in g.settings.admins if admin != self.content.from_user.id]
-        if not other_admins:
-            reply = "You are the only admin."
-        else:
-            reply = "List of admins:"
+        other_admins = [admin for admin in Settings().admins if admin != self.content.from_user.id]
+        reply = "List of admins (current user is not displayed):"
 
         data = {
             f"➖ Remove admin with ID: {admin}": f"remove_admin_{admin}" for admin in other_admins
         }
         data.update({AddAdmin._text: AddAdmin._callback})
+        await self.content.answer(reply, reply_markup=self.inlines(data))
+
+
+class Forms(Event):
+    _button = Event.BUTTON_FORMS
+    _answer = "Choose a form to fill out."
+    _menu = []
+
+    async def process(self, *args, **kwargs) -> None:
+        templates = Settings().active_templates
+        reply = "Select a form to fill out:"
+
+        data = {template.title: f"form_{template.idx}" for template in templates}
         await self.content.answer(reply, reply_markup=self.inlines(data))
 
 
@@ -173,6 +194,10 @@ class AddAdmin(Callback):
 
     _entries = [NumberEntry("Admin ID", "Incorrect user ID.", "Enter the user ID to add as admin.")]
 
+    async def process(self, *args, **kwargs) -> None:
+        await super().process()
+        Settings().add_admin(self.answers)
+
 
 class EventGroup:
     @classmethod
@@ -188,8 +213,8 @@ class EventGroup:
 
 
 class MenuGroup(EventGroup):
-    _events = [Start, MainMenu, Cancel]
+    _events = [Start, MainMenu, Cancel, Forms]
 
 
 class AdminGroup(EventGroup):
-    _events = [Settings, Admins]
+    _events = [SettingsMenu, Admins]

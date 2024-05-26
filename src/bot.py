@@ -22,10 +22,7 @@ bot = Bot(token=TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
 @events(MenuGroup)
 @handle_errors
 async def menu_group(event: Event) -> None:
-    await event.content.answer(
-        event.answer,
-        reply_markup=event.menu,
-    )
+    await event.reply()
     await event.process()
 
 
@@ -33,17 +30,14 @@ async def menu_group(event: Event) -> None:
 @handle_errors
 @admin_only
 async def admin_group(event: Event) -> None:
-    await event.content.answer(
-        event.answer,
-        reply_markup=event.menu,
-    )
+    await event.reply()
     await event.process()
 
 
 @router.message(Command("form"))
 @handle_errors
 async def process_form(message: Message, state: FSMContext) -> None:
-    template = settings.get_template()
+    template = settings.active_templates[0]
     stepper = Stepper(message, state, template=template)
     await stepper.start()
 
@@ -52,10 +46,7 @@ async def process_form(message: Message, state: FSMContext) -> None:
 @handle_errors
 @admin_only
 async def add_admin(callback: Callback):
-    await bot.send_message(
-        callback.user_id,
-        callback.answer,
-    )
+    await callback.reply()
     await callback.process()
 
 

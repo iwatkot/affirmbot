@@ -19,6 +19,15 @@ class EnvVars:
     ENV = "ENV"
 
 
+class Singleton(type):
+    _instances = {}
+
+    def __call__(cls, *args, **kwargs):
+        if cls not in cls._instances:
+            cls._instances[cls] = super(Singleton, cls).__call__(*args, **kwargs)
+        return cls._instances[cls]
+
+
 def env_to_list(env_name: str, separator: str = ",", cast: type = int) -> list:
     """Read environment variable and return a list of values of specified type
 
