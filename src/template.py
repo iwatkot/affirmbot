@@ -91,6 +91,18 @@ class TextEntry(Entry):
             return False
 
 
+class NumberEntry(Entry):
+    def __init__(self, title: str, incorrect: str, description: str = None, **kwargs):
+        super().__init__(title, incorrect, description, **kwargs)
+
+    def validate_answer(self, content: str) -> bool:
+        try:
+            assert content.isdigit()
+            return True
+        except AssertionError:
+            return False
+
+
 class DateEntry(Entry):
 
     def __init__(self, title: str, incorrect: str, description: str = None, **kwargs):

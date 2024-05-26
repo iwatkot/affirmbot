@@ -1,6 +1,7 @@
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, KeyboardButton, Message, ReplyKeyboardMarkup
 
+from src.decorators import form, handle_errors
 from src.event import Cancel, MainMenu
 from src.form import CombinedMeta, get_form
 from src.logger import Logger
@@ -88,7 +89,8 @@ class Stepper:
 
     async def start(self) -> None:
         if self._step == 0:
-            return await self.forward()
+            await self.forward()
+            await self.register()
         else:
             raise ValueError("Stepper is already started, use forward() method to move forward")
 
@@ -116,12 +118,16 @@ class Stepper:
         await self._state.update_data(**self.data)
 
     async def close(self) -> None:
-        data = await self._state.get_data()  # TODO: Process data.
-        logger.debug(f"Collected data: {data}.")
+        self._results = await self._state.get_data()
+        logger.debug(f"Saved results: {self._results}...")
         await self._message.answer(
             self._complete, reply_markup=self._reply_keyboard([self.main_menu])
         )
         await self._state.clear()
+
+    @property
+    def results(self) -> dict[str, str]:
+        return self._results
 
     async def _update_state(self) -> None:
         await self._state.set_state(getattr(self.form, self.entry.title))
@@ -166,3 +172,18 @@ class Stepper:
         for idx, title in enumerate(self._titles):
             if self._state == getattr(self._template.form, title):
                 return idx
+
+    async def register(self):
+        @form(self.entries_titles)
+        @handle_errors
+        async def steps(message: Message | CallbackQuery, state: FSMContext) -> None:
+            if not await self.validate(message):
+                return
+
+            await self.update(message, state)
+
+            if self.ended:
+                await self.close()
+                return
+
+            await self.forward()

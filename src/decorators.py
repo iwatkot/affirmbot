@@ -76,8 +76,8 @@ def events(events: EventGroup):
 def callback(callback: Callback):
     def decorator(func):
         @event_router.callback_query(callback.callback())
-        async def wrapper(query: CallbackQuery) -> None:
-            return await func(callback(query))
+        async def wrapper(query: CallbackQuery, state: FSMContext) -> None:
+            return await func(callback(query, state))
 
         return wrapper
 

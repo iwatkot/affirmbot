@@ -5,16 +5,9 @@ from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
-from aiogram.types import CallbackQuery, Message
+from aiogram.types import Message
 
-from src.decorators import (
-    admin_only,
-    callback,
-    event_router,
-    events,
-    form,
-    handle_errors,
-)
+from src.decorators import admin_only, callback, event_router, events, handle_errors
 from src.event import AddAdmin, AdminGroup, Callback, Event, MenuGroup
 from src.globals import TOKEN, settings
 from src.logger import Logger
@@ -52,20 +45,6 @@ async def process_form(message: Message, state: FSMContext) -> None:
     stepper = Stepper(message, state, template=template)
     await stepper.start()
 
-    @form(stepper.entries_titles)
-    @handle_errors
-    async def steps(message: Message | CallbackQuery, state: FSMContext) -> None:
-        if not await stepper.validate(message):
-            return
-
-        await stepper.update(message, state)
-
-        if stepper.ended:
-            await stepper.close()
-            return
-
-        await stepper.forward()
-
 
 @callback(AddAdmin)
 @admin_only
@@ -74,6 +53,7 @@ async def add_admin(callback: Callback):
         callback.user_id,
         callback.answer,
     )
+    await callback.process()
 
 
 @handle_errors

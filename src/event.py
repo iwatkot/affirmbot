@@ -11,6 +11,7 @@ from aiogram.types import (
 
 import src.globals as g
 from src.logger import Logger
+from src.template import Entry, NumberEntry
 
 logger = Logger(__name__)
 
@@ -123,9 +124,10 @@ class Callback:
     def callback(cls) -> F:
         return F.data.startswith(cls._callback)
 
-    def __init__(self, query: CallbackQuery):
+    def __init__(self, query: CallbackQuery, state: FSMContext) -> None:
         data = query.data.replace(self._callback, "")
         self._query = query
+        self._state = state
         self._data = None if not data else self._data_type(data)
         self._user_id = query.from_user.id
         self._is_admin = g.settings.is_admin(self._user_id)
@@ -133,6 +135,10 @@ class Callback:
     @property
     def query(self) -> CallbackQuery:
         return self._query
+
+    @property
+    def state(self) -> FSMContext:
+        return self._state
 
     @property
     def data(self):
@@ -150,12 +156,25 @@ class Callback:
     def answer(self) -> str:
         return self._answer
 
+    @property
+    def entries(self) -> list[Entry]:
+        return self._entries
+
 
 class AddAdmin(Callback):
     _text = "➕ Add new admin"
     _callback = "add_admin"
     _data_type = int
     _answer = "Enter the ID of the user you want to add as an admin."
+
+    _entries = [NumberEntry("Admin ID", "Incorrect user ID.", "Enter the user ID to add as admin.")]
+
+    async def process(self):
+        if self.entries:
+            from src.stepper import Stepper
+
+            stepper = Stepper(self.query, self.state, entries=self.entries, complete="Admin added.")
+            await stepper.start()
 
 
 class EventGroup:
