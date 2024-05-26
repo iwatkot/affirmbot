@@ -160,23 +160,36 @@ class Callback:
     def entries(self) -> list[Entry]:
         return self._entries
 
+    async def process(self, *args, **kwargs) -> None:
+        if self.entries:
+            from src.stepper import Stepper
+
+            stepper = Stepper(self.query, self.state, entries=self.entries, complete=self._complete)
+            await stepper.start()
+            self.results = await stepper.results()
+
+    @property
+    def answers(self):
+        answers = []
+        for entry in self.entries:
+            answers.append(entry.get_answer(self.results))
+        return answers if len(answers) > 1 else answers[0]
+
 
 class AddAdmin(Callback):
     _text = "➕ Add new admin"
     _callback = "add_admin"
     _data_type = int
     _answer = "Enter the ID of the user you want to add as an admin."
+    _complete = "Admin added."
 
     _entries = [NumberEntry("Admin ID", "Incorrect user ID.", "Enter the user ID to add as admin.")]
 
     async def process(self):
         if self.entries:
-            from src.stepper import Stepper
+            await super().process()
 
-            stepper = Stepper(self.query, self.state, entries=self.entries, complete="Admin added.")
-            await stepper.start()
-            results = await stepper.results()
-            print(results)
+            g.settings.add_admin(self.answers)
 
 
 class EventGroup:

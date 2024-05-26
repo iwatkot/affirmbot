@@ -15,6 +15,10 @@ class Settings:
     def admins(self) -> list[int]:
         return self._admins.copy()
 
+    def add_admin(self, user_id: int) -> None:
+        if user_id not in self._admins:
+            self._admins.append(user_id)
+
     @property
     def active_template(self) -> int:
         return self._active_template

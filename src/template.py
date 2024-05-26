@@ -78,6 +78,9 @@ class Entry:
     def validate_answer(self, content: str) -> bool:
         raise NotImplementedError
 
+    def get_answer(self, results: dict[str, str]) -> str | int:
+        return self.base_type(results[self.title])
+
 
 class TextEntry(Entry):
     def __init__(self, title: str, incorrect: str, description: str = None, **kwargs):
@@ -92,6 +95,8 @@ class TextEntry(Entry):
 
 
 class NumberEntry(Entry):
+    base_type = int
+
     def __init__(self, title: str, incorrect: str, description: str = None, **kwargs):
         super().__init__(title, incorrect, description, **kwargs)
 

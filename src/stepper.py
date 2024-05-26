@@ -40,7 +40,7 @@ class Stepper:
         self.cancel = Cancel._button
 
         self._results = None
-        self._resilts_set = asyncio.Event()
+        self._results_ready = asyncio.Event()
 
     @property
     def message(self) -> Message:
@@ -123,7 +123,7 @@ class Stepper:
 
     async def close(self) -> None:
         self._results = await self._state.get_data()
-        self._resilts_set.set()
+        self._results_ready.set()
         logger.debug(f"Saved results: {self._results}...")
         await self._message.answer(
             self._complete, reply_markup=self._reply_keyboard([self.main_menu])
@@ -131,7 +131,7 @@ class Stepper:
         await self._state.clear()
 
     async def results(self) -> dict[str, str]:
-        await self._resilts_set.wait()
+        await self._results_ready.wait()
         return self._results
 
     async def _update_state(self) -> None:
