@@ -3,9 +3,6 @@ import asyncio
 from aiogram import Bot, Dispatcher, Router
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
-from aiogram.filters import Command
-from aiogram.fsm.context import FSMContext
-from aiogram.types import Message
 
 from src.decorators import admin_only, callbacks, event_router, events, handle_errors
 from src.event import (
@@ -16,9 +13,8 @@ from src.event import (
     MenuGroup,
     UserCallbacks,
 )
-from src.globals import TOKEN, settings
+from src.globals import TOKEN
 from src.logger import Logger
-from src.stepper import Stepper
 
 logger = Logger(__name__)
 dp = Dispatcher()
