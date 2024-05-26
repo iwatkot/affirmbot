@@ -7,8 +7,15 @@ from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
 
-from src.decorators import admin_only, callback, event_router, events, handle_errors
-from src.event import AddAdmin, AdminGroup, Callback, Event, Form, MenuGroup
+from src.decorators import admin_only, callbacks, event_router, events, handle_errors
+from src.event import (
+    AdminCallbacks,
+    AdminGroup,
+    Callback,
+    Event,
+    MenuGroup,
+    UserCallbacks,
+)
 from src.globals import TOKEN, settings
 from src.logger import Logger
 from src.stepper import Stepper
@@ -34,25 +41,17 @@ async def admin_group(event: Event) -> None:
     await event.process()
 
 
-@router.message(Command("form"))
-@handle_errors
-async def process_form(message: Message, state: FSMContext) -> None:
-    template = settings.active_templates[0]
-    stepper = Stepper(message, state, template=template)
-    await stepper.start()
-
-
-@callback(AddAdmin)
+@callbacks(AdminCallbacks)
 @handle_errors
 @admin_only
-async def add_admin(callback: Callback):
+async def admin_callbacks(callback: Callback) -> None:
     await callback.reply()
     await callback.process()
 
 
-@callback(Form)
+@callbacks(UserCallbacks)
 @handle_errors
-async def form(callback: Callback):
+async def user_callbacks(callback: Callback) -> None:
     await callback.reply()
     await callback.process()
 

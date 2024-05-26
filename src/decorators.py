@@ -6,7 +6,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, Message
 
 import src.globals as g
-from event import Callback, Event, EventGroup
+from event import Callback, CallbackGroup, Event, EventGroup
 from src.form import get_form
 from src.logger import Logger
 
@@ -81,6 +81,17 @@ def callback(callback: Callback):
         @event_router.callback_query(callback.callback())
         async def wrapper(query: CallbackQuery, state: FSMContext) -> None:
             return await func(callback(query, state))
+
+        return wrapper
+
+    return decorator
+
+
+def callbacks(callbacks: CallbackGroup):
+    def decorator(func):
+        @event_router.callback_query(callbacks.callbacks())
+        async def wrapper(query: CallbackQuery, state: FSMContext) -> None:
+            return await func(callbacks.callback(query, state))
 
         return wrapper
 

@@ -20,6 +20,10 @@ class Settings(metaclass=Singleton):
         if user_id not in self._admins:
             self._admins.append(user_id)
 
+    def remove_admin(self, user_id: int) -> None:
+        if user_id in self._admins:
+            self._admins.remove(user_id)
+
     @property
     def active_templates(self) -> list[Template]:
         return [template for template in self._templates if template.is_active]

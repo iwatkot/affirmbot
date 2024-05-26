@@ -124,7 +124,8 @@ class Admins(Event):
         reply = "List of admins (current user is not displayed):"
 
         data = {
-            f"➖ Remove admin with ID: {admin}": f"remove_admin_{admin}" for admin in other_admins
+            f"➖ Remove admin with ID: {admin}": f"{RemoveAdmin._callback}{admin}"
+            for admin in other_admins
         }
         data.update({AddAdmin._text: AddAdmin._callback})
         await self.content.answer(reply, reply_markup=Helper.inline_keyboard(data))
@@ -177,7 +178,7 @@ class Callback(BaseEvent):
 
 class AddAdmin(Callback):
     _text = "➕ Add new admin"
-    _callback = "add_admin"
+    _callback = "admin__add_admin"
     _data_type = int
     _complete = "Admin added."
 
@@ -188,8 +189,17 @@ class AddAdmin(Callback):
         Settings().add_admin(self.answers)
 
 
+class RemoveAdmin(Callback):
+    _callback = "admin__remove_admin"
+    _data_type = int
+    _answer = "Admin removed."
+
+    async def process(self, *args, **kwargs) -> None:
+        Settings().remove_admin(self.data)
+
+
 class Form(Callback):
-    _callback = "form_"
+    _callback = "user__form_"
     _data_type = int
 
     async def process(self, *args, **kwargs) -> None:
@@ -212,9 +222,31 @@ class EventGroup:
         return MainMenu(message, state)
 
 
+class CallbackGroup:
+    @classmethod
+    def callbacks(cls) -> F:
+        return F.data.startswith(cls._prefix)
+
+    @classmethod
+    def callback(cls, query: CallbackQuery, state: FSMContext) -> Callback:
+        for event in cls._callbacks:
+            if query.data.startswith(event._callback):
+                return event(query, state)
+
+
 class MenuGroup(EventGroup):
     _events = [Start, MainMenu, Cancel, Forms]
 
 
 class AdminGroup(EventGroup):
     _events = [SettingsMenu, Admins]
+
+
+class AdminCallbacks(CallbackGroup):
+    _prefix = "admin__"
+    _callbacks = [AddAdmin, RemoveAdmin]
+
+
+class UserCallbacks(CallbackGroup):
+    _prefix = "user__"
+    _callbacks = [Form]
