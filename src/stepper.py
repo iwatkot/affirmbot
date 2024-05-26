@@ -2,22 +2,28 @@ from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, KeyboardButton, Message, ReplyKeyboardMarkup
 
 from src.event import Cancel, MainMenu
+from src.form import CombinedMeta, get_form
 from src.logger import Logger
-from src.template import Template
+from src.template import Entry
 
 logger = Logger(__name__)
 
 
 class Stepper:
 
-    def __init__(self, message: Message, state: FSMContext, template: Template = None):
-        self._template = template
-        self._titles = [entry.title for entry in self._template.entries]
-        self._steps = len(self._template.entries)
-        self._state = state
+    def __init__(
+        self, message: Message, state: FSMContext, entries: list[Entry] = None, complete: str = None
+    ):
         self._message = message
+        self._state = state
+        self._entries = entries
+        self._complete = complete
+
+        self._form = get_form(self.entries_titles)
+
         self._step = 0
         self._current_state = None
+
         self.main_menu = MainMenu._button
         self.cancel = Cancel._button
 
@@ -30,14 +36,6 @@ class Stepper:
         self._message = value
 
     @property
-    def step(self) -> int:
-        return self._step
-
-    @step.setter
-    def step(self, value: int) -> None:
-        self._step = value
-
-    @property
     def state(self) -> FSMContext:
         return self._state
 
@@ -45,6 +43,31 @@ class Stepper:
     def state(self, value: FSMContext) -> None:
         self._state = value
         self._step = self._detect_step()
+
+    @property
+    def entries(self) -> list[Entry]:
+        return self._entries
+
+    @property
+    def entry(self) -> Entry:
+        logger.debug(f"Getting entry {self.step} of {len(self._entries)}...")
+        return self._entries[self.step - 1]
+
+    @property
+    def entries_titles(self) -> list[str]:
+        return [entry.title for entry in self._entries]
+
+    @property
+    def form(self) -> CombinedMeta:
+        return self._form
+
+    @property
+    def step(self) -> int:
+        return self._step
+
+    @step.setter
+    def step(self, value: int) -> None:
+        self._step = value
 
     @property
     def current_state(self) -> str:
@@ -56,7 +79,6 @@ class Stepper:
 
     async def start(self) -> None:
         if self._step == 0:
-            logger.debug(f"Starting stepper for {self._template.title} form...")
             return await self.forward()
         else:
             raise ValueError("Stepper is already started, use forward() method to move forward")
@@ -85,17 +107,18 @@ class Stepper:
         await self._state.update_data(**self.data)
 
     async def close(self) -> None:
-        # data = await self._state.get_data()  # TODO: Process data.
+        data = await self._state.get_data()  # TODO: Process data.
+        logger.debug(f"Collected data: {data}.")
         await self._message.answer(
-            self._template.complete, reply_markup=self._reply_keyboard([self.main_menu])
+            self._complete, reply_markup=self._reply_keyboard([self.main_menu])
         )
         await self._state.clear()
 
     async def _update_state(self) -> None:
-        await self._state.set_state(getattr(self._template.form, self._get_entry_title()))
+        await self._state.set_state(getattr(self.form, self.entry.title))
 
     async def _send_answer(self) -> None:
-        entry = self._template.get_entry(self.step)
+        entry = self.entry
         buttons = entry.options if entry.options else []
         buttons.append(self.cancel)
         await self._message.answer(
@@ -108,14 +131,15 @@ class Stepper:
 
     @property
     def ended(self) -> bool:
-        return self.step == self._steps
-
-    @property
-    def entry(self):
-        return self._template.get_entry(self.step - 1)
+        ended = self.step == len(self.entries)
+        if ended:
+            logger.debug(f"Stepper is ending, step {self.step} of {len(self.entries)}")
+        else:
+            logger.debug(f"Stepper is not ending, step {self.step} of {len(self.entries)}")
+        return ended
 
     def _prepare_message(self) -> str:
-        entry = self._template.get_entry(self.step)
+        entry = self.entry
         message = f"<b>{entry.title}</b>\n\n"
         if entry.description:
             message += f"{entry.description}\n"
@@ -128,9 +152,6 @@ class Stepper:
     @property
     def data(self) -> dict[str, str]:
         return {self.keyword: self._message.text}
-
-    def _get_entry_title(self) -> str:
-        return self._titles[self.step]
 
     def _detect_step(self) -> int:
         for idx, title in enumerate(self._titles):

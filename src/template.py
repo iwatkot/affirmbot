@@ -3,7 +3,6 @@ from __future__ import annotations
 from datetime import datetime
 
 import src.globals as g
-from src.form import CombinedMeta, get_form
 from src.logger import Logger
 from src.utils import Modes
 
@@ -36,10 +35,6 @@ class Template:
         return self._entries
 
     @property
-    def entries_titles(self) -> list[str]:
-        return [entry.title for entry in self.entries]
-
-    @property
     def complete(self) -> str:
         return self._complete
 
@@ -48,10 +43,6 @@ class Template:
 
     def __repr__(self) -> str:
         return f"Form title='{self.title}' | description='{self.description}' | entries='{self.entries}'"
-
-    @property
-    def form(self) -> CombinedMeta:
-        return get_form(self.entries_titles)
 
 
 class Entry:

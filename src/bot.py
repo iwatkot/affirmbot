@@ -49,10 +49,10 @@ async def admin_group(event: Event) -> None:
 @handle_errors
 async def process_form(message: Message, state: FSMContext) -> None:
     template = settings.get_template()
-    stepper = Stepper(message, state, template)
+    stepper = Stepper(message, state, template.entries, template.complete)
     await stepper.start()
 
-    @form(template.entries_titles)
+    @form(stepper.entries_titles)
     @handle_errors
     async def steps(message: Message | CallbackQuery, state: FSMContext) -> None:
         if not await stepper.validate(message):
