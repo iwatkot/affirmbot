@@ -16,7 +16,45 @@ from src.template import Entry, NumberEntry
 logger = Logger(__name__)
 
 
-class Event:
+class BaseEvent:
+    def __init__(self, content: Message | CallbackQuery, state: FSMContext) -> None:
+        self._content = content
+        self._state = state
+        self._user_id = content.from_user.id
+        self._is_admin = g.settings.is_admin(self._user_id)
+
+    @property
+    def content(self) -> Message | CallbackQuery:
+        return self._content
+
+    @property
+    def state(self) -> FSMContext:
+        return self._state
+
+    @property
+    def user_id(self) -> int:
+        return self._user_id
+
+    @property
+    def is_admin(self) -> bool:
+        return self._is_admin
+
+    @property
+    def answer(self) -> str:
+        return self._answer
+
+    async def process(self, *args, **kwargs) -> None:
+        if self.entries:
+            from src.stepper import Stepper
+
+            stepper = Stepper(
+                self.content, self.state, entries=self.entries, complete=self._complete
+            )
+            await stepper.start()
+            self.results = await stepper.results()
+
+
+class Event(BaseEvent):
     BUTTON_MAIN_MENU = "🏠 Main Menu"
     BUTTON_CANCEL = "❌ Cancel"
     BUTTON_FORMS = "📝 Forms"
@@ -24,15 +62,9 @@ class Event:
     BUTTON_SETTINGS = "⚙️ Settings"
     BUTTON_ADMINS = "👥 Admins"
 
-    def __init__(self, message: Message, state: FSMContext) -> None:
-        self._message = message
-        self._state = state
-        self._user_id = message.from_user.id
-        self._is_admin = g.settings.is_admin(self._user_id)
-
     @property
     def menu(self) -> ReplyKeyboardMarkup:
-        buttons = self._menu
+        buttons = self._menu.copy()
         if self.is_admin:
             buttons += getattr(self, "_admin", [])
         keyboard = [[KeyboardButton(text=button)] for button in buttons]
@@ -51,22 +83,6 @@ class Event:
     @property
     def answer(self) -> str:
         return self._answer
-
-    @property
-    def is_admin(self) -> bool:
-        return self._is_admin
-
-    @property
-    def user_id(self) -> int:
-        return self._user_id
-
-    @property
-    def message(self) -> Message:
-        return self._message
-
-    @property
-    def state(self) -> FSMContext:
-        return self._state
 
     async def process(self, *args, **kwargs) -> None:
         pass
@@ -106,7 +122,7 @@ class Admins(Event):
     _menu = []
 
     async def process(self, *args, **kwargs) -> None:
-        other_admins = [admin for admin in g.settings.admins if admin != self.message.from_user.id]
+        other_admins = [admin for admin in g.settings.admins if admin != self.content.from_user.id]
         if not other_admins:
             reply = "You are the only admin."
         else:
@@ -116,57 +132,29 @@ class Admins(Event):
             f"➖ Remove admin with ID: {admin}": f"remove_admin_{admin}" for admin in other_admins
         }
         data.update({AddAdmin._text: AddAdmin._callback})
-        await self.message.answer(reply, reply_markup=self.inlines(data))
+        await self.content.answer(reply, reply_markup=self.inlines(data))
 
 
-class Callback:
+class Callback(BaseEvent):
     @classmethod
     def callback(cls) -> F:
         return F.data.startswith(cls._callback)
 
-    def __init__(self, query: CallbackQuery, state: FSMContext) -> None:
-        data = query.data.replace(self._callback, "")
-        self._query = query
-        self._state = state
+    def __init__(self, content: CallbackQuery, state: FSMContext) -> None:
+        super().__init__(content, state)
+        data = content.data.replace(self._callback, "")
         self._data = None if not data else self._data_type(data)
-        self._user_id = query.from_user.id
-        self._is_admin = g.settings.is_admin(self._user_id)
-
-    @property
-    def query(self) -> CallbackQuery:
-        return self._query
-
-    @property
-    def state(self) -> FSMContext:
-        return self._state
 
     @property
     def data(self):
         return self._data
 
     @property
-    def is_admin(self) -> bool:
-        return self._is_admin
-
-    @property
-    def user_id(self) -> int:
-        return self._user_id
-
-    @property
-    def answer(self) -> str:
-        return self._answer
-
-    @property
     def entries(self) -> list[Entry]:
         return self._entries
 
     async def process(self, *args, **kwargs) -> None:
-        if self.entries:
-            from src.stepper import Stepper
-
-            stepper = Stepper(self.query, self.state, entries=self.entries, complete=self._complete)
-            await stepper.start()
-            self.results = await stepper.results()
+        await super().process()
 
     @property
     def answers(self):
@@ -184,12 +172,6 @@ class AddAdmin(Callback):
     _complete = "Admin added."
 
     _entries = [NumberEntry("Admin ID", "Incorrect user ID.", "Enter the user ID to add as admin.")]
-
-    async def process(self):
-        if self.entries:
-            await super().process()
-
-            g.settings.add_admin(self.answers)
 
 
 class EventGroup:

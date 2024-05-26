@@ -20,8 +20,9 @@ bot = Bot(token=TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
 
 
 @events(MenuGroup)
+@handle_errors
 async def menu_group(event: Event) -> None:
-    await event.message.answer(
+    await event.content.answer(
         event.answer,
         reply_markup=event.menu,
     )
@@ -29,9 +30,10 @@ async def menu_group(event: Event) -> None:
 
 
 @events(AdminGroup)
+@handle_errors
 @admin_only
 async def admin_group(event: Event) -> None:
-    await event.message.answer(
+    await event.content.answer(
         event.answer,
         reply_markup=event.menu,
     )
@@ -47,6 +49,7 @@ async def process_form(message: Message, state: FSMContext) -> None:
 
 
 @callback(AddAdmin)
+@handle_errors
 @admin_only
 async def add_admin(callback: Callback):
     await bot.send_message(

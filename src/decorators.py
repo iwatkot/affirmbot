@@ -5,6 +5,7 @@ from aiogram import Router
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, Message
 
+import src.globals as g
 from event import Callback, Event, EventGroup
 from src.form import get_form
 from src.logger import Logger
@@ -43,6 +44,8 @@ def handle_errors(func):
             return await func(*args, **kwargs)
         except Exception as e:
             logger.error(f"An error occurred in {func.__module__}.{func.__name__}: {repr(e)}")
+            if g.is_development:
+                raise e
             try:
                 logger.dump_traceback(traceback.format_exc())
             except Exception:

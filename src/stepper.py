@@ -16,13 +16,13 @@ class Stepper:
 
     def __init__(
         self,
-        message: Message,
+        content: Message | CallbackQuery,
         state: FSMContext,
         entries: list[Entry] = None,
         complete: str = None,
         template: Template = None,
     ):
-        self._message = message
+        self._content = content
         self._state = state
         if template:
             self._entries = template.entries
@@ -30,6 +30,8 @@ class Stepper:
         else:
             self._entries = entries
             self._complete = complete
+
+        logger.debug(f"Stepper initialized with {len(self.entries)} entries...")
 
         self._form = get_form(self.entries_titles)
 
@@ -43,12 +45,12 @@ class Stepper:
         self._results_ready = asyncio.Event()
 
     @property
-    def message(self) -> Message:
-        return self._message
+    def content(self) -> Message | CallbackQuery:
+        return self._content
 
-    @message.setter
-    def message(self, value: Message) -> None:
-        self._message = value
+    @content.setter
+    def content(self, value: Message | CallbackQuery) -> None:
+        self._content = value
 
     @property
     def state(self) -> FSMContext:
@@ -65,6 +67,10 @@ class Stepper:
 
     @property
     def entry(self) -> Entry:
+        return self._entries[self.step]
+
+    @property
+    def previous_entry(self) -> Entry:
         return self._entries[self.step - 1]
 
     @property
@@ -92,6 +98,7 @@ class Stepper:
         self._current_state = value
 
     async def start(self) -> None:
+        logger.debug("Starting stepper...")
         if self._step == 0:
             await self.forward()
             return await self.register()
@@ -99,33 +106,36 @@ class Stepper:
             raise ValueError("Stepper is already started, use forward() method to move forward")
 
     async def forward(self) -> None:
+        logger.debug(f"Current step: {self.step}, moving forward...")
         await self._send_answer()
         await self._update_state()
         self.step += 1
-        logger.debug(f"Moving forward to step {self.step}...")
+        logger.debug(f"Moved forward to step {self.step}...")
 
-    async def validate(self, message: Message | CallbackQuery) -> bool:
-        content = message.text if isinstance(message, Message) else message.data
+    async def validate(self, content: Message | CallbackQuery) -> bool:
+        logger.debug(f"Validating answer for step {self.step} of {len(self.entries)}...")
+        answer = content.text if isinstance(content, Message) else content.data
 
-        correct = self.entry.validate_answer(content)
+        correct = self.previous_entry.validate_answer(answer)
         if not correct:
-            await message.answer(self.entry.incorrect)
+            await content.answer(self.entry.incorrect)
             return False
         return True
 
-    async def update(self, message: Message, state: FSMContext) -> None:
+    async def update(self, content: Message | CallbackQuery, state: FSMContext) -> None:
         self._state = state
         self._current_state = await self._state.get_state()
         logger.debug(f"Current state updated to {self._current_state}...")
-        self._message = message
+        self.content = content
 
         await self._state.update_data(**self.data)
 
     async def close(self) -> None:
+        logger.debug("Closing stepper...")
         self._results = await self._state.get_data()
         self._results_ready.set()
         logger.debug(f"Saved results: {self._results}...")
-        await self._message.answer(
+        await self.content.answer(
             self._complete, reply_markup=self._reply_keyboard([self.main_menu])
         )
         await self._state.clear()
@@ -141,9 +151,7 @@ class Stepper:
         entry = self.entry
         buttons = entry.options if entry.options else []
         buttons.append(self.cancel)
-        await self._message.answer(
-            self._prepare_message(), reply_markup=self._reply_keyboard(buttons)
-        )
+        await self.content.answer(self._prepare_text(), reply_markup=self._reply_keyboard(buttons))
 
     def _reply_keyboard(self, buttons: list[str]) -> ReplyKeyboardMarkup:
         keyboard = [[KeyboardButton(text=button)] for button in buttons]
@@ -158,12 +166,12 @@ class Stepper:
             logger.debug(f"Stepper is not ending, step {self.step} of {len(self.entries)}")
         return ended
 
-    def _prepare_message(self) -> str:
+    def _prepare_text(self) -> str:
         entry = self.entry
-        message = f"<b>{entry.title}</b>\n\n"
+        text = f"<b>{entry.title}</b>\n\n"
         if entry.description:
-            message += f"{entry.description}\n"
-        return message
+            text += f"{entry.description}\n"
+        return text
 
     @property
     def keyword(self) -> str:
@@ -171,7 +179,7 @@ class Stepper:
 
     @property
     def data(self) -> dict[str, str]:
-        return {self.keyword: self._message.text}
+        return {self.keyword: self.content.text}
 
     def _detect_step(self) -> int:
         for idx, title in enumerate(self._titles):
@@ -181,11 +189,11 @@ class Stepper:
     async def register(self):
         @form(self.entries_titles)
         @handle_errors
-        async def steps(message: Message | CallbackQuery, state: FSMContext) -> None:
-            if not await self.validate(message):
+        async def steps(content: Message | CallbackQuery, state: FSMContext) -> None:
+            if not await self.validate(content):
                 return
 
-            await self.update(message, state)
+            await self.update(content, state)
 
             if self.ended:
                 await self.close()
