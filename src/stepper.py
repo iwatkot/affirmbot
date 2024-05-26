@@ -4,7 +4,7 @@ from aiogram.types import CallbackQuery, KeyboardButton, Message, ReplyKeyboardM
 from src.event import Cancel, MainMenu
 from src.form import CombinedMeta, get_form
 from src.logger import Logger
-from src.template import Entry
+from src.template import Entry, Template
 
 logger = Logger(__name__)
 
@@ -12,12 +12,21 @@ logger = Logger(__name__)
 class Stepper:
 
     def __init__(
-        self, message: Message, state: FSMContext, entries: list[Entry] = None, complete: str = None
+        self,
+        message: Message,
+        state: FSMContext,
+        entries: list[Entry] = None,
+        complete: str = None,
+        template: Template = None,
     ):
         self._message = message
         self._state = state
-        self._entries = entries
-        self._complete = complete
+        if template:
+            self._entries = template.entries
+            self._complete = template.complete
+        else:
+            self._entries = entries
+            self._complete = complete
 
         self._form = get_form(self.entries_titles)
 
