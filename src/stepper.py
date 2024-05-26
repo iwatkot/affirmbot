@@ -1,13 +1,14 @@
 import asyncio
 
 from aiogram.fsm.context import FSMContext
-from aiogram.types import CallbackQuery, KeyboardButton, Message, ReplyKeyboardMarkup
+from aiogram.types import CallbackQuery, Message
 
 from src.decorators import form, handle_errors
 from src.event import Cancel, MainMenu
 from src.form import CombinedMeta, get_form
 from src.logger import Logger
 from src.template import Entry, Template
+from src.utils import Helper
 
 logger = Logger(__name__)
 
@@ -136,7 +137,7 @@ class Stepper:
         self._results_ready.set()
         logger.debug(f"Saved results: {self._results}...")
         await self.content.answer(
-            self._complete, reply_markup=self._reply_keyboard([self.main_menu])
+            self._complete, reply_markup=Helper.reply_keyboard([self.main_menu])
         )
         await self._state.clear()
 
@@ -151,11 +152,8 @@ class Stepper:
         entry = self.entry
         buttons = entry.options if entry.options else []
         buttons.append(self.cancel)
-        await self.content.answer(self._prepare_text(), reply_markup=self._reply_keyboard(buttons))
-
-    def _reply_keyboard(self, buttons: list[str]) -> ReplyKeyboardMarkup:
-        keyboard = [[KeyboardButton(text=button)] for button in buttons]
-        return ReplyKeyboardMarkup(keyboard=keyboard, resize_keyboard=True)
+        text = self._prepare_text()
+        await Helper.force_answer(self.content, text, buttons)
 
     @property
     def ended(self) -> bool:

@@ -1,20 +1,12 @@
 from aiogram import F
 from aiogram.fsm.context import FSMContext
-from aiogram.types import (
-    CallbackQuery,
-    InlineKeyboardButton,
-    InlineKeyboardMarkup,
-    KeyboardButton,
-    Message,
-    ReplyKeyboardMarkup,
-)
+from aiogram.types import CallbackQuery, Message
 
 from src.config import Config
-
-# import src.globals as g
 from src.logger import Logger
 from src.settings import Settings
 from src.template import Entry, NumberEntry
+from src.utils import Helper
 
 logger = Logger(__name__)
 
@@ -44,22 +36,27 @@ class BaseEvent:
 
     @property
     def answer(self) -> str:
-        return self._answer
+        return getattr(self, "_answer", None)
+
+    @property
+    def menu(self) -> list[str]:
+        return getattr(self, "_menu", None)
 
     async def reply(self, *args, **kwargs):
-        from src.bot import bot
+        if not self.answer:
+            return
 
-        if isinstance(self.content, Message):
-            await self.content.answer(self.answer, reply_markup=self.menu)
-        elif isinstance(self.content, CallbackQuery):
-            await bot.send_message(self.user_id, self.answer)
+        await Helper.force_answer(self.content, self.answer, self.menu)
 
     async def process(self, *args, **kwargs) -> None:
         if self.entries:
             from src.stepper import Stepper
 
             stepper = Stepper(
-                self.content, self.state, entries=self.entries, complete=self._complete
+                self.content,
+                self.state,
+                entries=self.entries,
+                complete=self.complete,
             )
             await stepper.start()
             self.results = await stepper.results()
@@ -74,18 +71,11 @@ class Event(BaseEvent):
     BUTTON_ADMINS = "👥 Admins"
 
     @property
-    def menu(self) -> ReplyKeyboardMarkup:
+    def menu(self) -> list[str]:
         buttons = self._menu.copy()
         if self.is_admin:
             buttons += getattr(self, "_admin", [])
-        keyboard = [[KeyboardButton(text=button)] for button in buttons]
-        return ReplyKeyboardMarkup(keyboard=keyboard, resize_keyboard=True)
-
-    def inlines(self, data: dict[str, str]) -> InlineKeyboardMarkup:
-        keyboard = [
-            [InlineKeyboardButton(text=text, callback_data=data)] for text, data in data.items()
-        ]
-        return InlineKeyboardMarkup(inline_keyboard=keyboard)
+        return buttons
 
     @classmethod
     def button(cls) -> F:
@@ -93,7 +83,7 @@ class Event(BaseEvent):
 
     @property
     def answer(self) -> str:
-        return self._answer
+        return getattr(self, "_answer", None)
 
     async def process(self, *args, **kwargs) -> None:
         pass
@@ -127,9 +117,6 @@ class SettingsMenu(Event):
 
 class Admins(Event):
     _button = Event.BUTTON_ADMINS
-    _answer = (
-        "Here's the list of admins, you can add or remove them, but you can't remove yourself."
-    )
     _menu = []
 
     async def process(self, *args, **kwargs) -> None:
@@ -140,20 +127,19 @@ class Admins(Event):
             f"➖ Remove admin with ID: {admin}": f"remove_admin_{admin}" for admin in other_admins
         }
         data.update({AddAdmin._text: AddAdmin._callback})
-        await self.content.answer(reply, reply_markup=self.inlines(data))
+        await self.content.answer(reply, reply_markup=Helper.inline_keyboard(data))
 
 
 class Forms(Event):
     _button = Event.BUTTON_FORMS
-    _answer = "Choose a form to fill out."
     _menu = []
 
     async def process(self, *args, **kwargs) -> None:
         templates = Settings().active_templates
         reply = "Select a form to fill out:"
 
-        data = {template.title: f"form_{template.idx}" for template in templates}
-        await self.content.answer(reply, reply_markup=self.inlines(data))
+        data = {template.title: f"{Form._callback}{template.idx}" for template in templates}
+        await self.content.answer(reply, reply_markup=Helper.inline_keyboard(data))
 
 
 class Callback(BaseEvent):
@@ -172,7 +158,11 @@ class Callback(BaseEvent):
 
     @property
     def entries(self) -> list[Entry]:
-        return self._entries
+        return getattr(self, "_entries", [])
+
+    @property
+    def complete(self) -> str:
+        return getattr(self, "_complete")
 
     async def process(self, *args, **kwargs) -> None:
         await super().process()
@@ -189,7 +179,6 @@ class AddAdmin(Callback):
     _text = "➕ Add new admin"
     _callback = "add_admin"
     _data_type = int
-    _answer = "Enter the ID of the user you want to add as an admin."
     _complete = "Admin added."
 
     _entries = [NumberEntry("Admin ID", "Incorrect user ID.", "Enter the user ID to add as admin.")]
@@ -197,6 +186,17 @@ class AddAdmin(Callback):
     async def process(self, *args, **kwargs) -> None:
         await super().process()
         Settings().add_admin(self.answers)
+
+
+class Form(Callback):
+    _callback = "form_"
+    _data_type = int
+
+    async def process(self, *args, **kwargs) -> None:
+        template = Settings().get_template(self.data)
+        self._entries = template.entries
+        self._complete = template.complete
+        await super().process()
 
 
 class EventGroup:

@@ -8,7 +8,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
 
 from src.decorators import admin_only, callback, event_router, events, handle_errors
-from src.event import AddAdmin, AdminGroup, Callback, Event, MenuGroup
+from src.event import AddAdmin, AdminGroup, Callback, Event, Form, MenuGroup
 from src.globals import TOKEN, settings
 from src.logger import Logger
 from src.stepper import Stepper
@@ -46,6 +46,13 @@ async def process_form(message: Message, state: FSMContext) -> None:
 @handle_errors
 @admin_only
 async def add_admin(callback: Callback):
+    await callback.reply()
+    await callback.process()
+
+
+@callback(Form)
+@handle_errors
+async def form(callback: Callback):
     await callback.reply()
     await callback.process()
 

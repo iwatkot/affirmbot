@@ -1,5 +1,14 @@
 import os
 
+from aiogram.types import (
+    CallbackQuery,
+    InlineKeyboardButton,
+    InlineKeyboardMarkup,
+    KeyboardButton,
+    Message,
+    ReplyKeyboardMarkup,
+)
+
 
 class Modes:
     """Simple class to store modes."""
@@ -49,3 +58,36 @@ def make_dirs(dirs: list[str]) -> None:
     """
     for dir in dirs:
         os.makedirs(dir, exist_ok=True)
+
+
+class Helper:
+    @staticmethod
+    async def force_answer(
+        content: Message | CallbackQuery,
+        text: str,
+        butttons: list[str] = [],
+    ) -> None:
+        from src.bot import bot
+
+        if isinstance(content, CallbackQuery):
+            await bot.send_message(
+                content.from_user.id,
+                text,
+                reply_markup=Helper.reply_keyboard(butttons),
+            )
+        else:
+            await content.answer(text, reply_markup=Helper.reply_keyboard(butttons))
+
+    @staticmethod
+    def reply_keyboard(buttons: list[str] = None) -> ReplyKeyboardMarkup | None:
+        if not buttons:
+            return
+        keyboard = [[KeyboardButton(text=button)] for button in buttons]
+        return ReplyKeyboardMarkup(keyboard=keyboard, resize_keyboard=True)
+
+    @staticmethod
+    def inline_keyboard(data: dict[str, str]) -> InlineKeyboardMarkup:
+        keyboard = [
+            [InlineKeyboardButton(text=text, callback_data=data)] for text, data in data.items()
+        ]
+        return InlineKeyboardMarkup(inline_keyboard=keyboard)

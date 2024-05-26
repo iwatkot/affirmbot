@@ -24,6 +24,9 @@ class Settings(metaclass=Singleton):
     def active_templates(self) -> list[Template]:
         return [template for template in self._templates if template.is_active]
 
+    def get_template(self, idx: int) -> Template:
+        return self._templates[idx]
+
     def is_admin(self, user_id: int) -> bool:
         return user_id in self._admins
 
