@@ -2,6 +2,7 @@ import copy
 
 import yaml
 
+from src.globals import DEFAULT_CONFIG, config_yaml
 from src.logger import Logger
 from src.template import Template
 from src.utils import Singleton
@@ -12,7 +13,7 @@ logger = Logger(__name__)
 class Config(metaclass=Singleton):
     def __init__(self, config_yaml: str):
         config_json = yaml.safe_load(open(config_yaml))
-        logger.debug(f"Loaded config from {config_yaml}: {config_json}")
+        logger.info(f"Trying to load config from {config_yaml}")
 
         templates_json = config_json.get("templates", [])
         if not templates_json:
@@ -47,3 +48,11 @@ class Config(metaclass=Singleton):
     @property
     def welcome(self) -> str:
         return self._welcome
+
+
+try:
+    Config(config_yaml)
+    logger.info(f"Succesfully loaded config from {config_yaml}")
+except ValueError as e:
+    logger.error(f"Failed to load config: {e}, will use default config.")
+    Config(DEFAULT_CONFIG)

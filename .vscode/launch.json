@@ -3,11 +3,12 @@
     "configurations": [
         {
             "name": "Linux / Mac  Bot",
-            "type": "python",
+            "type": "debugpy",
             "request": "launch",
             "program": "src/bot.py",
             "console": "integratedTerminal",
             "justMyCode": true,
+            // "preLaunchTask": "mypy",
             "env": {
                 "PYTHONPATH": "${workspaceFolder}:${PYTHONPATH}"
             }

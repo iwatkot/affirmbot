@@ -21,7 +21,7 @@ class Logger(logging.getLoggerClass()):
     def __init__(
         self,
         name: str,
-        level: logging.DEBUG | logging.INFO | logging.WARNING | logging.ERROR = None,
+        level: str = None,
         log_dir: str = None,
     ):
         super().__init__(name)

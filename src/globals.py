@@ -2,15 +2,15 @@ import os
 
 from dotenv import load_dotenv
 
-from src.config import Config
+# from src.config import Config
 from src.logger import Logger
-from src.settings import Settings
 from src.utils import EnvVars, env_to_list
 
 logger = Logger(__name__)
 CWD = os.getcwd()
 LOCAL_ENV = os.path.join(CWD, "local.env")
 DEFAULT_CONFIG = os.path.join(CWD, "config.yml")
+SETTINGS_JSON = os.path.join(CWD, "settings.json")
 
 local_env = os.path.join(LOCAL_ENV)
 if os.path.isfile(local_env):
@@ -43,12 +43,3 @@ else:
 
 if not os.path.isfile(config_yaml):
     raise FileNotFoundError(f"Can't find config file at {config_yaml}")
-
-try:
-    config = Config(config_yaml)
-except ValueError as e:
-    logger.error(f"Failed to load config: {e}, will use default config.")
-    config = Config(DEFAULT_CONFIG)
-logger.info(f"Loaded {len(config.templates)} templates: {config.templates}")
-
-settings = Settings(ADMINS)

@@ -1,0 +1,11 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "mypy",
+            "type": "shell",
+            "command": "mypy src",
+            "problemMatcher": []
+        }
+    ]
+}
