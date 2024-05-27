@@ -7,11 +7,13 @@ from datetime import datetime
 
 from src.utils import make_dirs
 
+# region constants
 LOG_LEVEL = os.getenv("LOG_LEVEL", logging.DEBUG)
 LOG_FORMATTER = "%(name)s | %(asctime)s | %(levelname)s | %(message)s"
 LOG_DIR = os.path.join(os.getcwd(), "logs")
 TB_DIR = os.path.join(LOG_DIR, "tracebacks")
 ARCHIVES_DIR = os.path.join(LOG_DIR, "archives")
+# endregion
 make_dirs([LOG_DIR, TB_DIR, ARCHIVES_DIR])
 
 

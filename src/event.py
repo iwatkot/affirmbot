@@ -1,3 +1,5 @@
+from functools import partial
+
 from aiogram import F
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, Message
@@ -69,6 +71,7 @@ class Event(BaseEvent):
     """ADMIN BUTTONS"""
     BUTTON_SETTINGS = "⚙️ Settings"
     BUTTON_ADMINS = "👥 Admins"
+    BUTTON_CHANNEL = "📡 Channel"
 
     @property
     def menu(self) -> list[str]:
@@ -112,7 +115,7 @@ class Cancel(MainMenu):
 class SettingsMenu(Event):
     _button = Event.BUTTON_SETTINGS
     _answer = "In this section you can change the settings of the bot."
-    _menu = [Event.BUTTON_ADMINS, Event.BUTTON_MAIN_MENU]
+    _menu = [Event.BUTTON_ADMINS, Event.BUTTON_CHANNEL, Event.BUTTON_MAIN_MENU]
 
 
 class Admins(Event):
@@ -128,6 +131,23 @@ class Admins(Event):
             for admin in other_admins
         }
         data.update({AddAdmin._text: AddAdmin._callback})
+        await self.content.answer(reply, reply_markup=Helper.inline_keyboard(data))
+
+
+class Channel(Event):
+    _button = Event.BUTTON_CHANNEL
+    _menu = []
+
+    async def process(self, *args, **kwargs) -> None:
+        channel = Settings().channel
+        reply = "Currently connected channel:"
+        if not channel:
+            data = {ConnectChannel._text: ConnectChannel._callback}
+        else:
+            data = {
+                f"{DisconnectChannel._text} with ID: {channel}": f"{DisconnectChannel._callback}{channel}"
+            }
+
         await self.content.answer(reply, reply_markup=Helper.inline_keyboard(data))
 
 
@@ -189,8 +209,54 @@ class AddAdmin(Callback):
         Settings().add_admin(self.answers)
 
 
+class ConnectChannel(Callback):
+    _text = "➕ Connect channel"
+    _callback = "admin__connect_channel_"
+    _data_type = int
+    _complete = "Channel connected."
+
+    _connect_entry = NumberEntry(
+        "Channel ID",
+        "Incorrect channel ID or bot is not added to the channel.",
+        "Enter the channel ID to connect.",
+    )
+
+    async def validate_connection(self, content: str):
+
+        from src.bot import bot
+
+        channel_id = int(content)
+        try:
+            message = await bot.send_message(
+                channel_id, "AffirmBot is connected to the channel.", disable_notification=True
+            )
+            await message.delete()
+            return True
+        except Exception as e:
+            logger.error(f"Error connecting to the channel: {e}")
+            return False
+
+    _connect_entry.validate_answer = partial(validate_connection, _connect_entry)
+
+    _entries = [_connect_entry]
+
+    async def process(self, *args, **kwargs) -> None:
+        await super().process()
+        Settings().channel = self.answers
+
+
+class DisconnectChannel(Callback):
+    _text = "➖ Disconnect channel"
+    _callback = "admin__disconnect_channel_"
+    _data_type = int
+    _answer = "Channel disconnected."
+
+    async def process(self, *args, **kwargs) -> None:
+        Settings().channel = None
+
+
 class RemoveAdmin(Callback):
-    _callback = "admin__remove_admin"
+    _callback = "admin__remove_admin_"
     _data_type = int
     _answer = "Admin removed."
 
@@ -239,12 +305,12 @@ class MenuGroup(EventGroup):
 
 
 class AdminGroup(EventGroup):
-    _events = [SettingsMenu, Admins]
+    _events = [SettingsMenu, Admins, Channel]
 
 
 class AdminCallbacks(CallbackGroup):
     _prefix = "admin__"
-    _callbacks = [AddAdmin, RemoveAdmin]
+    _callbacks = [AddAdmin, RemoveAdmin, ConnectChannel, DisconnectChannel]
 
 
 class UserCallbacks(CallbackGroup):

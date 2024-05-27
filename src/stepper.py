@@ -117,9 +117,9 @@ class Stepper:
         logger.debug(f"Validating answer for step {self.step} of {len(self.entries)}...")
         answer = content.text if isinstance(content, Message) else content.data
 
-        correct = self.previous_entry.validate_answer(answer)
+        correct = await self.previous_entry.validate_answer(answer)
         if not correct:
-            await content.answer(self.entry.incorrect)
+            await content.answer(self.previous_entry.incorrect)
             return False
         return True
 

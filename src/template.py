@@ -98,7 +98,7 @@ class Entry:
     def __repr__(self) -> str:
         return f"Entry title='{self.title}' | description='{self.description}' | options='{self.options}'"
 
-    def validate_answer(self, content: str) -> bool:
+    async def validate_answer(self, content: str) -> bool:
         raise NotImplementedError
 
     def get_answer(self, results: dict[str, str]) -> str | int:
@@ -109,7 +109,7 @@ class TextEntry(Entry):
     def __init__(self, title: str, incorrect: str, description: str = None, **kwargs):
         super().__init__(title, incorrect, description, **kwargs)
 
-    def validate_answer(self, content: str) -> bool:
+    async def validate_answer(self, content: str) -> bool:
         try:
             assert isinstance(content, str)
             return True
@@ -123,7 +123,7 @@ class NumberEntry(Entry):
     def __init__(self, title: str, incorrect: str, description: str = None, **kwargs):
         super().__init__(title, incorrect, description, **kwargs)
 
-    def validate_answer(self, content: str) -> bool:
+    async def validate_answer(self, content: str) -> bool:
         try:
             assert content.isdigit()
             return True
@@ -136,7 +136,7 @@ class DateEntry(Entry):
     def __init__(self, title: str, incorrect: str, description: str = None, **kwargs):
         super().__init__(title, incorrect, description, **kwargs)
 
-    def validate_answer(self, content: str) -> bool:
+    async def validate_answer(self, content: str) -> bool:
         if g.is_development:
             return True
         date_formats = ["%Y-%m-%d", "%d-%m-%Y", "%m-%d-%Y", "%Y.%m.%d", "%d.%m.%Y", "%m.%d.%Y"]
