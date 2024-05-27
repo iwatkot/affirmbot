@@ -10,3 +10,4 @@ logs/
 .flake8
 .gitignore
 create_venv.sh
+settings.json
