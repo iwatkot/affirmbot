@@ -20,6 +20,9 @@ class BaseEvent:
         self._state = state
         self._user_id = content.from_user.id
         self._is_admin = Settings().is_admin(self._user_id)
+        logger.debug(
+            f"Event {self.__class__.__name__} initialized for user {self.user_id} (admin: {self.is_admin})"
+        )
 
     @property
     def content(self) -> Message | CallbackQuery:
