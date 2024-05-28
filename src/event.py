@@ -72,6 +72,7 @@ class Event(BaseEvent):
     BUTTON_SETTINGS = "⚙️ Settings"
     BUTTON_ADMINS = "👥 Admins"
     BUTTON_CHANNEL = "📡 Channel"
+    BUTTON_TEMPLATES = "📄 Templates"
 
     @property
     def menu(self) -> list[str]:
@@ -115,7 +116,12 @@ class Cancel(MainMenu):
 class SettingsMenu(Event):
     _button = Event.BUTTON_SETTINGS
     _answer = "In this section you can change the settings of the bot."
-    _menu = [Event.BUTTON_ADMINS, Event.BUTTON_CHANNEL, Event.BUTTON_MAIN_MENU]
+    _menu = [
+        Event.BUTTON_ADMINS,
+        Event.BUTTON_CHANNEL,
+        Event.BUTTON_MAIN_MENU,
+        Event.BUTTON_TEMPLATES,
+    ]
 
 
 class Admins(Event):
@@ -127,7 +133,7 @@ class Admins(Event):
         reply = "List of admins (current user is not displayed):"
 
         data = {
-            f"➖ Remove admin with ID: {admin}": f"{RemoveAdmin._callback}{admin}"
+            f"{RemoveAdmin._text} with ID: {admin}": f"{RemoveAdmin._callback}{admin}"
             for admin in other_admins
         }
         data.update({AddAdmin._text: AddAdmin._callback})
@@ -147,6 +153,20 @@ class Channel(Event):
             data = {
                 f"{DisconnectChannel._text} with ID: {channel}": f"{DisconnectChannel._callback}{channel}"
             }
+
+        await self.content.answer(reply, reply_markup=Helper.inline_keyboard(data))
+
+
+class Templates(Event):
+    _button = Event.BUTTON_TEMPLATES
+    _menu = []
+
+    async def process(self, *args, **kwargs) -> None:
+        reply = "List of templates:"
+        data = {}
+        for template in Settings().templates:
+            callback = DeactivateTemplate if template.is_active else ActivateTemplate
+            data[f"{callback._text}: {template.title}"] = f"{callback._callback}{template.idx}"
 
         await self.content.answer(reply, reply_markup=Helper.inline_keyboard(data))
 
@@ -256,12 +276,33 @@ class DisconnectChannel(Callback):
 
 
 class RemoveAdmin(Callback):
+    _text = "➖ Remove admin"
     _callback = "admin__remove_admin_"
     _data_type = int
     _answer = "Admin removed."
 
     async def process(self, *args, **kwargs) -> None:
         Settings().remove_admin(self.data)
+
+
+class DeactivateTemplate(Callback):
+    _text = "➖ Deactivate template"
+    _callback = "admin__deactivate_template_"
+    _data_type = int
+    _answer = "Template deactivated."
+
+    async def process(self, *args, **kwargs) -> None:
+        Settings().deactivate_template(self.data)
+
+
+class ActivateTemplate(Callback):
+    _text = "➕ Activate template"
+    _callback = "admin__activate_template_"
+    _data_type = int
+    _answer = "Template activated."
+
+    async def process(self, *args, **kwargs) -> None:
+        Settings().activate_template(self.data)
 
 
 class Form(Callback):
@@ -305,12 +346,19 @@ class MenuGroup(EventGroup):
 
 
 class AdminGroup(EventGroup):
-    _events = [SettingsMenu, Admins, Channel]
+    _events = [SettingsMenu, Admins, Channel, Templates]
 
 
 class AdminCallbacks(CallbackGroup):
     _prefix = "admin__"
-    _callbacks = [AddAdmin, RemoveAdmin, ConnectChannel, DisconnectChannel]
+    _callbacks = [
+        AddAdmin,
+        RemoveAdmin,
+        ConnectChannel,
+        DisconnectChannel,
+        ActivateTemplate,
+        DeactivateTemplate,
+    ]
 
 
 class UserCallbacks(CallbackGroup):

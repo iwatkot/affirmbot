@@ -52,6 +52,22 @@ class Settings(metaclass=Singleton):
     def active_templates(self) -> list[Template]:
         return [template for template in self._templates if template.is_active]
 
+    @property
+    def inactive_templates(self) -> list[Template]:
+        return [template for template in self._templates if not template.is_active]
+
+    @dump
+    def deactivate_template(self, idx: int) -> None:
+        self.get_template(idx).disable
+
+    @dump
+    def activate_template(self, idx: int) -> None:
+        self.get_template(idx).enable
+
+    @property
+    def templates(self) -> list[Template]:
+        return self._templates.copy()
+
     def get_template(self, idx: int) -> Template:
         return self._templates[idx]
 
@@ -71,12 +87,19 @@ class Settings(metaclass=Singleton):
         return {
             "admins": self._admins,
             "channel": self._channel,
+            "active_templates": [template.idx for template in self.active_templates],
+            "inactive_templates": [template.idx for template in self.inactive_templates],
         }
 
     @classmethod
     def from_json(cls, data: dict[str, list[int] | int]) -> Settings:
         try:
-            return cls(data["admins"], data["channel"])
+            settings = cls(data["admins"], data["channel"])
+            for idx in data.get("active_templates", []):
+                settings.activate_template(idx)
+            for idx in data.get("inactive_templates", []):
+                settings.deactivate_template(idx)
+            return settings
         except KeyError as e:
             raise ValueError(f"Invalid JSON data: {repr(e)}")
 
