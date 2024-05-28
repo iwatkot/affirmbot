@@ -119,8 +119,8 @@ class SettingsMenu(Event):
     _menu = [
         Event.BUTTON_ADMINS,
         Event.BUTTON_CHANNEL,
-        Event.BUTTON_MAIN_MENU,
         Event.BUTTON_TEMPLATES,
+        Event.BUTTON_MAIN_MENU,
     ]
 
 
