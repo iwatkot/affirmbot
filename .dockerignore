@@ -11,3 +11,4 @@ logs/
 .gitignore
 create_venv.sh
 settings.json
+storage.json

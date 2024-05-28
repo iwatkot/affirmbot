@@ -50,18 +50,6 @@ def env_to_list(env_name: str, separator: str = ",", cast: type = int) -> list:
     return [cast(env.strip()) for env in os.getenv(env_name, "").split(separator) if env.strip()]
 
 
-def compile_form(form: dict[str, str | list[str]]) -> str:
-    compiled = ""
-    for key, value in form.items():
-        if isinstance(value, list):
-            compiled += f"{key}:\n"
-            for item in value:
-                compiled += f"  - {item}\n"
-        else:
-            compiled += f"{key}: {value}\n"
-    return compiled
-
-
 def make_dirs(dirs: list[str]) -> None:
     """Create multiple directories
 

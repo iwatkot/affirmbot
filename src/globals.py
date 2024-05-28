@@ -12,6 +12,7 @@ CWD = os.getcwd()
 LOCAL_ENV = os.path.join(CWD, "local.env")
 DEFAULT_CONFIG = os.path.join(CWD, "config.yml")
 SETTINGS_JSON = os.path.join(CWD, "settings.json")
+STORAGE_JSON = os.path.join(CWD, "storage.json")
 # endregion
 
 if os.path.isfile(LOCAL_ENV):

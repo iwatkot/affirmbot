@@ -23,6 +23,9 @@ class Settings(metaclass=Singleton):
             template.idx = idx
         self._channel = channel
 
+        self._min_approval = 1
+        self._min_rejection = 1
+
     def dump(func):
         @wraps(func)
         def wrapper(self, *args, **kwargs):
@@ -83,12 +86,32 @@ class Settings(metaclass=Singleton):
     def channel(self, channel: int) -> None:
         self._channel = channel
 
+    @property
+    def min_approval(self) -> int:
+        return self._min_approval
+
+    @min_approval.setter
+    @dump
+    def min_approval(self, value: int) -> None:
+        self._min_approval = value
+
+    @property
+    def min_rejection(self) -> int:
+        return self._min_rejection
+
+    @min_rejection.setter
+    @dump
+    def min_rejection(self, value: int) -> None:
+        self._min_rejection = value
+
     def to_json(self) -> dict[str, list[int] | int]:
         return {
             "admins": self._admins,
             "channel": self._channel,
             "active_templates": [template.idx for template in self.active_templates],
             "inactive_templates": [template.idx for template in self.inactive_templates],
+            "min_approval": self._min_approval,
+            "min_rejection": self._min_rejection,
         }
 
     @classmethod
@@ -99,6 +122,8 @@ class Settings(metaclass=Singleton):
                 settings.activate_template(idx)
             for idx in data.get("inactive_templates", []):
                 settings.deactivate_template(idx)
+            settings.min_approval = data.get("min_approval", 1)
+            settings.min_rejection = data.get("min_rejection", 1)
             return settings
         except KeyError as e:
             raise ValueError(f"Invalid JSON data: {repr(e)}")

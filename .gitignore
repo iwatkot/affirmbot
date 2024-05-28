@@ -4,3 +4,4 @@ local.env
 logs/
 .DS_Store
 settings.json
+storage.json
