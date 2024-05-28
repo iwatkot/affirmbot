@@ -342,21 +342,24 @@ class ConfirmForm(Callback):
     _callback = "admin__confirm_form_"
     _data_type = str
     _answer = "Form confirmed."
+    _storage_method = "approve_by"
 
     async def process(self, *args, **kwargs) -> None:
         post = Storage().get_post(self.data)
-        await post.approve_by(self.user_id)
+        if not post:
+            await Helper.force_answer(
+                self.content, "Form not found, it may have been approved or rejected already."
+            )
+            return
+        await getattr(post, self._storage_method)(self.user_id)
 
 
-class RejectForm(Callback):
+class RejectForm(ConfirmForm):
     _text = "❌ Reject"
     _callback = "admin__reject_form_"
     _data_type = str
     _answer = "Form rejected."
-
-    async def process(self, *args, **kwargs) -> None:
-        post = Storage().get_post(self.data)
-        await post.reject_by(self.user_id)
+    _storage_method = "reject_by"
 
 
 class EventGroup:
