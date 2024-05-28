@@ -1,4 +1,5 @@
 from functools import partial
+from time import time
 
 from aiogram import F
 from aiogram.fsm.context import FSMContext
@@ -8,7 +9,7 @@ from src.config import Config
 from src.logger import Logger
 from src.settings import Settings
 from src.template import Entry, NumberEntry
-from src.utils import Helper
+from src.utils import Helper, compile_form
 
 logger = Logger(__name__)
 
@@ -315,6 +316,49 @@ class Form(Callback):
         self._complete = template.complete
         await super().process()
 
+        from src.bot import bot
+
+        form = f"{template.title}\n\n"
+        form += compile_form(self.results)
+        username = self.content.from_user.username
+        if True:
+            form += f"\nAuthor: @{username}"
+        else:
+            form += f"\nAuthor: {self.content.from_user.full_name}"
+
+        epoch = int(time())
+        for admin in Settings().admins:
+            data = {
+                ConfirmForm._text: f"{ConfirmForm._callback}{epoch}_{self.user_id}_{admin}",
+                RejectForm._text: f"{RejectForm._callback}{epoch}_{self.user_id}_{admin}",
+            }
+            try:
+                await bot.send_message(admin, form, reply_markup=Helper.inline_keyboard(data))
+            except Exception as e:
+                logger.error(f"Error sending form to admin {admin}: {e}")
+
+
+class ConfirmForm(Callback):
+    _text = "✅ Confirm"
+    _callback = "admin__confirm_form_"
+    _data_type = str
+    _answer = "Form confirmed."
+
+    async def process(self, *args, **kwargs) -> None:
+        epoch, user_id, admin = self.data.split("_")
+        logger.debug(f"Form confirmed. Epoch: {epoch}, User: {user_id}, Admin: {admin}")
+
+
+class RejectForm(Callback):
+    _text = "❌ Reject"
+    _callback = "admin__reject_form_"
+    _data_type = str
+    _answer = "Form rejected."
+
+    async def process(self, *args, **kwargs) -> None:
+        epoch, user_id, admin = self.data.split("_")
+        logger.debug(f"Form rejected. Epoch: {epoch}, User: {user_id}, Admin: {admin}")
+
 
 class EventGroup:
     @classmethod
@@ -358,6 +402,8 @@ class AdminCallbacks(CallbackGroup):
         DisconnectChannel,
         ActivateTemplate,
         DeactivateTemplate,
+        ConfirmForm,
+        RejectForm,
     ]
 
 
