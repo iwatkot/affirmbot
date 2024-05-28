@@ -161,7 +161,7 @@ class OneOfEntry(Entry):
     ):
         super().__init__(title, incorrect, description, options, **kwargs)
 
-    def validate_answer(self, content: str) -> bool:
+    async def validate_answer(self, content: str) -> bool:
         if g.is_development:
             return True
         return content in self.options
