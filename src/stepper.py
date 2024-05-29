@@ -24,10 +24,20 @@ class Stepper:
         complete: str = None,
         template: Template = None,
     ):
+        # Generate a unique ID for the Stepper to match aiogram handlers.
         self._id = str(uuid.uuid4())
+
         self._content = content
+
+        # While state is a FSMContext object, state_code is a string representation of the current state
+        # which is used to match the current step of the Stepper and access the data
+        # the actual state objects from the form.
         self._state = state
+        self._state_code = None
+        self._step = 0
+
         if template:
+            # If the Stepper is initialized with from a Template.
             self._entries = template.entries
             self._complete = template.complete
         else:
@@ -36,16 +46,15 @@ class Stepper:
 
         logger.debug(f"Stepper initialized with {len(self.entries)} entries...")
 
-        self._form = get_form(self.entries_titles)
-
-        self._step = 0
-        self._current_state = None
+        self._form = get_form(self.steps)
 
         self.main_menu = MainMenu._button
         self.cancel = Cancel._button
 
+        # Results are stored in a dictionary and are only available after the Stepper is closed.
+        # Event is used to notify the results are ready.
         self._results = None
-        self._results_ready = asyncio.Event()
+        self.results_ready = asyncio.Event()
 
     @property
     def id(self) -> str:
@@ -66,7 +75,7 @@ class Stepper:
     @state.setter
     def state(self, value: FSMContext) -> None:
         self._state = value
-        self._step = self._detect_step()
+        self.match_step()
 
     @property
     def entries(self) -> list[Entry]:
@@ -80,12 +89,8 @@ class Stepper:
     def previous_entry(self) -> Entry:
         return self._entries[self.step - 1]
 
-    # @property
-    # def entries_titles(self) -> list[str]:
-    #     return [entry.title for entry in self._entries]
-
     @property
-    def entries_titles(self) -> list[str]:
+    def steps(self) -> list[str]:
         return [f"{self.id}{entry.title}" for entry in self._entries]
 
     @property
@@ -101,15 +106,23 @@ class Stepper:
         self._step = value
 
     @property
-    def current_state(self) -> str:
-        return self._current_state
+    def state_code(self) -> str | None:
+        return self._state_code
 
-    @current_state.setter
-    def current_state(self, value: str) -> None:
-        self._current_state = value
+    @state_code.setter
+    def state_code(self, value: str | None) -> None:
+        self._state_code = value
+
+    @property
+    def results(self) -> dict[str, str]:
+        return self._results
+
+    @results.setter
+    def results(self, value: dict[str, str]) -> None:
+        self._results = value
 
     async def start(self) -> None:
-        logger.debug("Starting stepper...")
+        logger.debug(f"Starting stepper with {len(self.entries)} entries...")
         if self._step == 0:
             await self.forward()
             return await self.register()
@@ -134,27 +147,27 @@ class Stepper:
         return True
 
     async def update(self, content: Message | CallbackQuery, state: FSMContext) -> None:
-        self._current_state = await self._state.get_state()
-        logger.debug(f"Current state updated to {self._current_state}...")
+        self.state_code = await self.state.get_state()
+        logger.debug(f"Current state updated to {self.state_code}...")
         self.state = state
         self.content = content
 
-        await self._state.update_data(**self.data)
+        await self.state.update_data(**self.data)  # type: ignore
 
     async def close(self) -> None:
         logger.debug("Closing stepper...")
-        raw_data = await self._state.get_data()
+        raw_data = await self.state.get_data()
         data = {key.replace(f"{self.id}", ""): value for key, value in raw_data.items()}
-        self._results = data
-        self._results_ready.set()
+        self.results = data
+        self.results_ready.set()
         logger.debug(f"Saved results: {self._results}...")
         await self.content.answer(
             self._complete, reply_markup=Helper.reply_keyboard([self.main_menu])
         )
-        await self._state.clear()
+        await self.state.clear()
 
-    async def results(self) -> dict[str, str]:
-        await self._results_ready.wait()
+    async def get_results(self) -> dict[str, str] | None:
+        await self.results_ready.wait()
         return self._results
 
     async def _update_state(self) -> None:
@@ -184,21 +197,33 @@ class Stepper:
         return text
 
     @property
-    def keyword(self) -> str:
-        return self._current_state.split(":")[1]
+    def keyword(self) -> str | None:
+        state_code = self.state_code
+        if state_code:
+            return state_code.split(":")[1]
+        return None
 
     @property
-    def data(self) -> dict[str, str]:
-        return {self.keyword: self.content.text}
+    def details(self) -> str | None:
+        if isinstance(self.content, Message):
+            return self.content.text
+        elif isinstance(self.content, CallbackQuery):
+            return self.content.data
 
-    def _detect_step(self) -> int:
-        for idx, title in enumerate(self.entries_titles):
-            if self._current_state == getattr(self._form, title):
+    @property
+    def data(self) -> dict[str | None, str | None]:
+        return {self.keyword: self.details}
+
+    def match_step(self) -> None:
+        for idx, title in enumerate(self.steps):
+            if self.state_code == getattr(self._form, title):
                 logger.debug(f"Current step detected: {idx + 1}...")
-                return idx + 1
+                self.step = idx + 1
 
     async def register(self):
-        @form(self.entries_titles)
+        logger.debug(f"Registering stepper with {len(self.entries)} entries...")
+
+        @form(self.steps)
         @handle_errors
         async def steps(content: Message | CallbackQuery, state: FSMContext) -> None:
             if not await self.validate(content):

@@ -66,7 +66,7 @@ class BaseEvent:
                 complete=self.complete,
             )
             await stepper.start()
-            self.results = await stepper.results()
+            self.results = await stepper.get_results()
             logger.debug(f"Form processed with results: {self.results}")
 
 
