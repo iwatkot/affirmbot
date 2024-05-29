@@ -1,5 +1,4 @@
 import os
-from typing import Type
 
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.types import (
