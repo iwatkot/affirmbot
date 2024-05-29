@@ -16,10 +16,16 @@ logger = Logger(__name__)
 
 
 class BaseEvent:
+    _entries: list[Entry] = []
+    _complete: str = ""
+
     def __init__(self, content: Message | CallbackQuery, state: FSMContext) -> None:
         self._content = content
         self._state = state
-        self._user_id = content.from_user.id
+        user = content.from_user
+        if not user:
+            raise ValueError("No user found in the content.")
+        self._user_id = user.id
         self._is_admin = Settings().is_admin(self._user_id)
         logger.debug(
             f"Event {self.__class__.__name__} initialized for user {self.user_id} (admin: {self.is_admin})"
@@ -42,12 +48,24 @@ class BaseEvent:
         return self._is_admin
 
     @property
-    def answer(self) -> str:
-        return getattr(self, "_answer", None)
+    def answer(self) -> str | None:
+        if hasattr(self, "_answer"):
+            return self._answer
+        return None
 
     @property
-    def menu(self) -> list[str]:
-        return getattr(self, "_menu", None)
+    def menu(self) -> list[str] | None:
+        if hasattr(self, "_menu"):
+            return self._menu
+        return None
+
+    @property
+    def entries(self) -> list[Entry]:
+        return getattr(self, "_entries", [])
+
+    @property
+    def complete(self) -> str:
+        return getattr(self, "_complete")
 
     async def reply(self, *args, **kwargs):
         if not self.answer:
@@ -82,6 +100,7 @@ class Event(BaseEvent):
     BUTTON_TEMPLATES = "📄 Templates"
 
     _button = ""
+    _menu: list[str] = []
 
     @property
     def menu(self) -> list[str]:
@@ -91,12 +110,8 @@ class Event(BaseEvent):
         return buttons
 
     @classmethod
-    def button(cls) -> F:
+    def button(cls) -> MagicFilter:
         return F.text == cls._button
-
-    @property
-    def answer(self) -> str:
-        return getattr(self, "_answer", None)
 
     async def process(self, *args, **kwargs) -> None:
         pass
@@ -138,7 +153,7 @@ class Admins(Event):
     _menu = []
 
     async def process(self, *args, **kwargs) -> None:
-        other_admins = [admin for admin in Settings().admins if admin != self.content.from_user.id]
+        other_admins = [admin for admin in Settings().admins if admin != self.user_id]
         reply = "List of admins (current user is not displayed):"
 
         data = {
@@ -182,7 +197,6 @@ class Templates(Event):
 
 class Forms(Event):
     _button = Event.BUTTON_FORMS
-    _menu = []
 
     async def process(self, *args, **kwargs) -> None:
         templates = Settings().active_templates
@@ -194,6 +208,7 @@ class Forms(Event):
 
 class Callback(BaseEvent):
     _callback = ""
+    _text = ""
     # ! "Callback" has no attribute "_data_type"  [attr-defined]
 
     @classmethod
@@ -210,14 +225,6 @@ class Callback(BaseEvent):
     @property
     def data(self):
         return self._data
-
-    @property
-    def entries(self) -> list[Entry]:
-        return getattr(self, "_entries", [])
-
-    @property
-    def complete(self) -> str:
-        return getattr(self, "_complete")
 
     @property
     def answers(self):
@@ -324,8 +331,10 @@ class Form(Callback):
         logger.debug(f"Processing form with template ID: {self.data}")
         template = Settings().get_template(self.data)
         logger.debug(f"Get template: {template.title}")
+        if not template.entries:
+            raise ValueError("Template has no entries.")
         self._entries = template.entries
-        self._complete = template.complete
+        self._complete = template.complete or "Form completed."
         await super().process()
 
         logger.debug(f"Form results: {self.results}")

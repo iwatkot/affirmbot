@@ -11,7 +11,9 @@ logger = Logger(__name__)
 
 
 class Config(metaclass=Singleton):
-    def __init__(self, config_yaml: str):
+    def __init__(self, config_yaml: str | None = None):
+        if not config_yaml:
+            raise ValueError("No config file provided")
         config_json = yaml.safe_load(open(config_yaml))
         logger.info(f"Trying to load config from {config_yaml}")
 

@@ -17,7 +17,7 @@ class Settings(metaclass=Singleton):
     def __init__(self, admins: list[int] | None = None, channel: int | None = None) -> None:
         if not admins:
             admins = ADMINS
-        self._admins = admins
+        self._admins = admins or []
         self._templates = Config().templates
         for idx, template in enumerate(self._templates):
             template.idx = idx
