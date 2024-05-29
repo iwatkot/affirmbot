@@ -53,6 +53,10 @@ class Template:
     def idx(self) -> int | None:
         return self._idx
 
+    @idx.setter
+    def idx(self, value: int) -> None:
+        self._idx = value
+
     @property
     def disable(self) -> bool:
         self.active = False
