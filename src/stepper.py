@@ -124,9 +124,9 @@ class Stepper:
         return True
 
     async def update(self, content: Message | CallbackQuery, state: FSMContext) -> None:
-        self._state = state
         self._current_state = await self._state.get_state()
         logger.debug(f"Current state updated to {self._current_state}...")
+        self.state = state
         self.content = content
 
         await self._state.update_data(**self.data)
@@ -180,9 +180,10 @@ class Stepper:
         return {self.keyword: self.content.text}
 
     def _detect_step(self) -> int:
-        for idx, title in enumerate(self._titles):
-            if self._state == getattr(self._template.form, title):
-                return idx
+        for idx, title in enumerate([entry.title for entry in self.entries]):
+            if self._current_state == getattr(self._form, title):
+                logger.debug(f"Current step detected: {idx + 1}...")
+                return idx + 1
 
     async def register(self):
         @form(self.entries_titles)

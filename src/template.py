@@ -35,7 +35,7 @@ class Template:
 
     @property
     def entries(self) -> list[Entry]:
-        return self._entries
+        return self._entries.copy()
 
     @property
     def complete(self) -> str:

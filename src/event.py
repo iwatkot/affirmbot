@@ -56,6 +56,7 @@ class BaseEvent:
 
     async def process(self, *args, **kwargs) -> None:
         if self.entries:
+            logger.debug(f"Processing form with {len(self.entries)} entries...")
             from src.stepper import Stepper
 
             stepper = Stepper(
@@ -66,6 +67,7 @@ class BaseEvent:
             )
             await stepper.start()
             self.results = await stepper.results()
+            logger.debug(f"Form processed with results: {self.results}")
 
 
 class Event(BaseEvent):
@@ -209,8 +211,8 @@ class Callback(BaseEvent):
     def complete(self) -> str:
         return getattr(self, "_complete")
 
-    async def process(self, *args, **kwargs) -> None:
-        await super().process()
+    # async def process(self, *args, **kwargs) -> None:
+    #     await super().process()
 
     @property
     def answers(self):
@@ -314,10 +316,14 @@ class Form(Callback):
     _data_type = int
 
     async def process(self, *args, **kwargs) -> None:
+        logger.debug(f"Processing form with template ID: {self.data}")
         template = Settings().get_template(self.data)
+        logger.debug(f"Get template: {template.title}")
         self._entries = template.entries
         self._complete = template.complete
         await super().process()
+
+        logger.debug(f"Form results: {self.results}")
 
         post = Post.from_content(template.title, self.results, self.content)
         Storage().add_post(post)

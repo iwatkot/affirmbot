@@ -1,4 +1,5 @@
 import asyncio
+from typing import cast
 
 from aiogram import Bot, Dispatcher, Router
 from aiogram.client.default import DefaultBotProperties
@@ -19,7 +20,7 @@ from src.logger import Logger
 logger = Logger(__name__)
 dp = Dispatcher()
 router = Router(name="main_router")
-bot = Bot(token=TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
+bot = Bot(token=cast(str, TOKEN), default=DefaultBotProperties(parse_mode=ParseMode.HTML))
 
 
 @events(MenuGroup)
