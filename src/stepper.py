@@ -1,4 +1,5 @@
 import asyncio
+import uuid
 
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, Message
@@ -23,6 +24,7 @@ class Stepper:
         complete: str = None,
         template: Template = None,
     ):
+        self._id = str(uuid.uuid4())
         self._content = content
         self._state = state
         if template:
@@ -44,6 +46,10 @@ class Stepper:
 
         self._results = None
         self._results_ready = asyncio.Event()
+
+    @property
+    def id(self) -> str:
+        return self._id
 
     @property
     def content(self) -> Message | CallbackQuery:
@@ -74,9 +80,13 @@ class Stepper:
     def previous_entry(self) -> Entry:
         return self._entries[self.step - 1]
 
+    # @property
+    # def entries_titles(self) -> list[str]:
+    #     return [entry.title for entry in self._entries]
+
     @property
     def entries_titles(self) -> list[str]:
-        return [entry.title for entry in self._entries]
+        return [f"{self.id}{entry.title}" for entry in self._entries]
 
     @property
     def form(self) -> CombinedMeta:
@@ -133,7 +143,9 @@ class Stepper:
 
     async def close(self) -> None:
         logger.debug("Closing stepper...")
-        self._results = await self._state.get_data()
+        raw_data = await self._state.get_data()
+        data = {key.replace(f"{self.id}", ""): value for key, value in raw_data.items()}
+        self._results = data
         self._results_ready.set()
         logger.debug(f"Saved results: {self._results}...")
         await self.content.answer(
@@ -146,7 +158,7 @@ class Stepper:
         return self._results
 
     async def _update_state(self) -> None:
-        await self._state.set_state(getattr(self.form, self.entry.title))
+        await self._state.set_state(getattr(self.form, f"{self.id}{self.entry.title}"))
 
     async def _send_answer(self) -> None:
         entry = self.entry
@@ -180,7 +192,7 @@ class Stepper:
         return {self.keyword: self.content.text}
 
     def _detect_step(self) -> int:
-        for idx, title in enumerate([entry.title for entry in self.entries]):
+        for idx, title in enumerate(self.entries_titles):
             if self._current_state == getattr(self._form, title):
                 logger.debug(f"Current step detected: {idx + 1}...")
                 return idx + 1
