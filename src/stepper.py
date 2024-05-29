@@ -2,14 +2,14 @@ import asyncio
 import uuid
 
 from aiogram.fsm.context import FSMContext
+from aiogram.fsm.state import StatesGroup
 from aiogram.types import CallbackQuery, Message
 
 from src.decorators import form, handle_errors
 from src.event import Cancel, MainMenu
-from src.form import CombinedMeta, get_form
 from src.logger import Logger
 from src.template import Entry, Template
-from src.utils import Helper
+from src.utils import Helper, get_form
 
 logger = Logger(__name__)
 
@@ -89,7 +89,7 @@ class Stepper:
         return [f"{self.id}{entry.title}" for entry in self._entries]
 
     @property
-    def form(self) -> CombinedMeta:
+    def form(self) -> StatesGroup:
         return self._form
 
     @property

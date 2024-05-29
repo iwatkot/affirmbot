@@ -7,8 +7,8 @@ from aiogram.types import CallbackQuery, Message
 
 import src.globals as g
 from event import Callback, CallbackGroup, Event, EventGroup
-from src.form import get_form
 from src.logger import Logger
+from src.utils import get_form
 
 logger = Logger(__name__)
 event_router = Router(name="event_router")
