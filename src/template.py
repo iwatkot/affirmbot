@@ -104,6 +104,9 @@ class Entry:
     def get_answer(self, results: dict[str, str]) -> str | int:
         return self.base_type(results[self.title])
 
+    def replace_validator(self, validator: callable) -> None:
+        self.validate_answer = validator
+
 
 class TextEntry(Entry):
     def __init__(self, title: str, incorrect: str, description: str = None, **kwargs):

@@ -1,6 +1,7 @@
 from functools import partial
+from typing import Type
 
-from aiogram import F
+from aiogram import F, MagicFilter
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, Message
 
@@ -79,6 +80,8 @@ class Event(BaseEvent):
     BUTTON_ADMINS = "👥 Admins"
     BUTTON_CHANNEL = "📡 Channel"
     BUTTON_TEMPLATES = "📄 Templates"
+
+    _button = ""
 
     @property
     def menu(self) -> list[str]:
@@ -190,14 +193,19 @@ class Forms(Event):
 
 
 class Callback(BaseEvent):
+    _callback = ""
+    # ! "Callback" has no attribute "_data_type"  [attr-defined]
+
     @classmethod
-    def callback(cls) -> F:
+    def callback(cls) -> MagicFilter:
         return F.data.startswith(cls._callback)
 
     def __init__(self, content: CallbackQuery, state: FSMContext) -> None:
         super().__init__(content, state)
+        if not content.data:
+            raise ValueError("Callback data is empty.")
         data = content.data.replace(self._callback, "")
-        self._data = None if not data else self._data_type(data)
+        self._data = None if not data else self._data_type(data)  # type: ignore[attr-defined]
 
     @property
     def data(self):
@@ -210,9 +218,6 @@ class Callback(BaseEvent):
     @property
     def complete(self) -> str:
         return getattr(self, "_complete")
-
-    # async def process(self, *args, **kwargs) -> None:
-    #     await super().process()
 
     @property
     def answers(self):
@@ -247,7 +252,7 @@ class ConnectChannel(Callback):
         "Enter the channel ID to connect.",
     )
 
-    async def validate_connection(self, content: str):
+    async def validate_connection(self, content: str) -> bool:
 
         from src.bot import bot
 
@@ -262,7 +267,7 @@ class ConnectChannel(Callback):
             logger.error(f"Error connecting to the channel: {e}")
             return False
 
-    _connect_entry.validate_answer = partial(validate_connection, _connect_entry)
+    _connect_entry.replace_validator(partial(validate_connection, _connect_entry))
 
     _entries = [_connect_entry]
 
@@ -325,7 +330,8 @@ class Form(Callback):
 
         logger.debug(f"Form results: {self.results}")
 
-        post = Post.from_content(template.title, self.results, self.content)
+        post = Post.from_content(template.title, self.results, self.content)  # type: ignore[arg-type]
+        # ! Argument 2 to "from_content" of "Post" has incompatible type "dict[str, str] | None"; expected "dict[str, str | list[str]]"  [arg-type]
         Storage().add_post(post)
 
         from src.bot import bot
@@ -369,8 +375,10 @@ class RejectForm(ConfirmForm):
 
 
 class EventGroup:
+    _events: list[Type[Event]] = []
+
     @classmethod
-    def buttons(cls) -> F:
+    def buttons(cls) -> MagicFilter:
         return F.text.in_([event._button for event in cls._events])
 
     @classmethod
@@ -382,15 +390,19 @@ class EventGroup:
 
 
 class CallbackGroup:
+    _callbacks: list[Type[Callback]] = []
+    _prefix = ""
+
     @classmethod
-    def callbacks(cls) -> F:
+    def callbacks(cls) -> MagicFilter:
         return F.data.startswith(cls._prefix)
 
     @classmethod
-    def callback(cls, query: CallbackQuery, state: FSMContext) -> Callback:
+    def callback(cls, query: CallbackQuery, state: FSMContext) -> Callback | None:
         for event in cls._callbacks:
-            if query.data.startswith(event._callback):
+            if query.data and query.data.startswith(event._callback):
                 return event(query, state)
+        return None
 
 
 class MenuGroup(EventGroup):
