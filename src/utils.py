@@ -108,7 +108,7 @@ class CombinedMeta(FormMeta, type(StatesGroup)):  # type: ignore[misc]
     pass
 
 
-def get_form(steps: list[str]) -> Type[StatesGroup]:
+def get_form(steps: list[str]) -> StatesGroup:
 
     class Form(StatesGroup, metaclass=CombinedMeta, steps=steps):  # type: ignore[call-arg, misc]
         pass

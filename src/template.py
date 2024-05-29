@@ -34,11 +34,11 @@ class Template:
         return self._description
 
     @property
-    def entries(self) -> list[Entry]:
+    def entries(self) -> list[Entry] | None:
         return self._entries.copy()
 
     @property
-    def complete(self) -> str:
+    def complete(self) -> str | None:
         return self._complete
 
     @property

@@ -20,10 +20,20 @@ class Stepper:
         self,
         content: Message | CallbackQuery,
         state: FSMContext,
-        entries: list[Entry] = None,
-        complete: str = None,
-        template: Template = None,
+        entries: list[Entry] | None = None,
+        complete: str | None = None,
+        template: Template | None = None,
     ):
+        if template:
+            # If the Stepper is initialized with from a Template.
+            self._entries = template.entries
+            self._complete = template.complete
+        else:
+            self._entries = entries
+            self._complete = complete
+
+        if not self._entries:
+            raise ValueError("Stepper must be initialized with at least one entry")
         # Generate a unique ID for the Stepper to match aiogram handlers.
         self._id = str(uuid.uuid4())
 
@@ -33,16 +43,8 @@ class Stepper:
         # which is used to match the current step of the Stepper and access the data
         # the actual state objects from the form.
         self._state = state
-        self._state_code = None
+        self._state_code: str | None = None
         self._step = 0
-
-        if template:
-            # If the Stepper is initialized with from a Template.
-            self._entries = template.entries
-            self._complete = template.complete
-        else:
-            self._entries = entries
-            self._complete = complete
 
         logger.debug(f"Stepper initialized with {len(self.entries)} entries...")
 
@@ -53,7 +55,7 @@ class Stepper:
 
         # Results are stored in a dictionary and are only available after the Stepper is closed.
         # Event is used to notify the results are ready.
-        self._results = None
+        self._results: dict[str, str] | None = None
         self.results_ready = asyncio.Event()
 
     @property
@@ -79,19 +81,19 @@ class Stepper:
 
     @property
     def entries(self) -> list[Entry]:
-        return self._entries
+        return self._entries  # type: ignore[return-value]
 
     @property
     def entry(self) -> Entry:
-        return self._entries[self.step]
+        return self.entries[self.step]
 
     @property
     def previous_entry(self) -> Entry:
-        return self._entries[self.step - 1]
+        return self.entries[self.step - 1]
 
     @property
     def steps(self) -> list[str]:
-        return [f"{self.id}{entry.title}" for entry in self._entries]
+        return [f"{self.id}{entry.title}" for entry in self.entries]
 
     @property
     def form(self) -> StatesGroup:
@@ -114,11 +116,11 @@ class Stepper:
         self._state_code = value
 
     @property
-    def results(self) -> dict[str, str]:
+    def results(self) -> dict[str, str] | None:
         return self._results
 
     @results.setter
-    def results(self, value: dict[str, str]) -> None:
+    def results(self, value: dict[str, str] | None) -> None:
         self._results = value
 
     async def start(self) -> None:
@@ -139,6 +141,8 @@ class Stepper:
     async def validate(self, content: Message | CallbackQuery) -> bool:
         logger.debug(f"Validating answer for step {self.step} of {len(self.entries)}...")
         answer = content.text if isinstance(content, Message) else content.data
+        if not answer:
+            return False
 
         correct = await self.previous_entry.validate_answer(answer)
         if not correct:
@@ -162,7 +166,7 @@ class Stepper:
         self.results_ready.set()
         logger.debug(f"Saved results: {self._results}...")
         await self.content.answer(
-            self._complete, reply_markup=Helper.reply_keyboard([self.main_menu])
+            self._complete, reply_markup=Helper.reply_keyboard([self.main_menu])  # type: ignore[arg-type]
         )
         await self.state.clear()
 
