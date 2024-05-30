@@ -12,3 +12,5 @@ logs/
 create_venv.sh
 settings.json
 storage.json
+tmp/
+custom.yml

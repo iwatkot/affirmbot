@@ -180,3 +180,19 @@ def get_form(steps: list[str]) -> StatesGroup:
         pass
 
     return Form
+
+
+def find_file(directory: str, file_name: str) -> str | None:
+    """Try to find the file in the given directory and all subdirectories.
+
+    Args:
+        directory (str): Path to the directory
+        file_name (str): Name of the file
+
+    Returns:
+        str | None: Path to the file or None if not found
+    """
+    for root, _, files in os.walk(directory):
+        if file_name in files:
+            return os.path.join(root, file_name)
+    return None

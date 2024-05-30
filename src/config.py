@@ -1,11 +1,14 @@
+from __future__ import annotations
+
 import copy
+import shutil
 
 import yaml
+from git import Repo
 
-from src.globals import DEFAULT_CONFIG, config_yaml
 from src.logger import Logger
 from src.template import Template
-from src.utils import Singleton
+from src.utils import Singleton, find_file
 
 logger = Logger(__name__)
 
@@ -16,24 +19,65 @@ class Config(metaclass=Singleton):
     Do not confuse with bot settings, which is stored in src/settings.py.
 
     Args:
-        config_yaml (str | None): Path to yaml config file.
+        templates (list[Template]): List of templates.
+        welcome (str): Welcome message.
     """
 
-    def __init__(self, config_yaml: str):
-        config_json = yaml.safe_load(open(config_yaml))
-        logger.info(f"Trying to load config from {config_yaml}")
+    file_name = "config.yml"
 
+    def __init__(self, templates: list[Template], welcome: str):
+        self._templates = templates
+        self._welcome = welcome
+
+    @classmethod
+    def from_yaml(cls, config_yaml: str) -> Config:
+        """Create Config object from yaml file.
+
+        Args:
+            config_yaml (str): Path to yaml file.
+
+        Returns:
+            Config: Config object.
+
+        Raises:
+            ValueError: If no templates found in config.
+            ValueError: If failed to load templates.
+            ValueError: If no welcome message found in config.
+        """
+        logger.info(f"Loading config from {config_yaml}")
+        config_json = yaml.safe_load(open(config_yaml))
         templates_json = config_json.get("templates", [])
         if not templates_json:
             logger.error("No templates found in config")
             raise ValueError("No templates found in config")
-        self._templates = [Template(**template) for template in templates_json]
+        try:
+            templates = [Template(**template) for template in templates_json]
+        except Exception as e:
+            logger.error(f"Failed to load templates: {e}")
+            raise ValueError("Failed to load templates")
 
         welcome = config_json.get("welcome")
         if not welcome:
             logger.error("No welcome message found in config")
             raise ValueError("No welcome message found in config")
-        self._welcome = welcome
+
+        logger.info(f"Succesfully loaded config with {len(templates)} templates")
+        return cls(templates, welcome)
+
+    @classmethod
+    def from_git(cls, repo_url: str, repo_directory: str, save_path: str) -> Config:
+        Repo.clone_from(repo_url, repo_directory)
+        logger.info(f"Cloned repository from {repo_url} to {repo_directory}")
+        config_file = find_file(repo_directory, cls.file_name)
+        if not config_file:
+            return
+
+        shutil.copy(config_file, save_path)
+        logger.info(f"Found config.yml, copied to {save_path}")
+        shutil.rmtree(repo_directory)
+        logger.debug(f"Removed repository directory {repo_directory}")
+
+        return cls.from_yaml(save_path)
 
     @property
     def templates(self) -> list[Template]:
@@ -43,6 +87,15 @@ class Config(metaclass=Singleton):
             list[Template]: List of templates.
         """
         return self._templates
+
+    @templates.setter
+    def templates(self, templates: list[Template]) -> None:
+        """Set templates.
+
+        Args:
+            templates (list[Template]): List of templates.
+        """
+        self._templates = templates
 
     def get_template(self, idx: int) -> Template | None:
         """Get template by index.
@@ -69,11 +122,3 @@ class Config(metaclass=Singleton):
             str: Welcome message.
         """
         return self._welcome
-
-
-try:
-    Config(config_yaml)
-    logger.info(f"Succesfully loaded config from {config_yaml}")
-except ValueError as e:
-    logger.error(f"Failed to load config: {e}, will use default config.")
-    Config(DEFAULT_CONFIG)

@@ -248,11 +248,13 @@ class Settings(metaclass=Singleton):
         try:
             settings = cls(data[SettingsFields.ADMINS], data[SettingsFields.CHANNEL])
             for idx in data.get(SettingsFields.ACTIVE_TEMPLATES, []):
-                settings.activate_template(idx)
+                template = settings.get_template(idx)
+                template.enable
             for idx in data.get(SettingsFields.INACTIVE_TEMPLATES, []):
-                settings.deactivate_template(idx)
-            settings.min_approval = data.get(SettingsFields.MIN_APPROVAL, 1)
-            settings.min_rejection = data.get(SettingsFields.MIN_REJECTION, 1)
+                template = settings.get_template(idx)
+                template.disable
+            settings._min_approval = data.get(SettingsFields.MIN_APPROVAL, 1)
+            settings._min_rejection = data.get(SettingsFields.MIN_REJECTION, 1)
             return settings
         except KeyError as e:
             raise ValueError(f"Invalid JSON data: {repr(e)}")
