@@ -40,6 +40,20 @@ class SettingsFields:
     MIN_REJECTION = "min_rejection"
 
 
+class StorageFields:
+    """Simple class to store storage fields names."""
+
+    POSTS = "posts"
+    TITLE = "title"
+    DATA = "data"
+    ID = "id"
+    USER_ID = "user_id"
+    USERNAME = "username"
+    FULL_NAME = "full_name"
+    ACCEPTED_BY = "accepted_by"
+    REJECTED_BY = "rejected_by"
+
+
 class Singleton(type):
     _instances = {}
 
