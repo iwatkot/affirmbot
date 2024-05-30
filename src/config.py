@@ -11,9 +11,15 @@ logger = Logger(__name__)
 
 
 class Config(metaclass=Singleton):
-    def __init__(self, config_yaml: str | None = None):
-        if not config_yaml:
-            raise ValueError("No config file provided")
+    """Singleton class to load and store config from yaml file.
+    Configuration is used to load custom forms and welcome message.
+    Do not confuse with bot settings, which is stored in src/settings.py.
+
+    Args:
+        config_yaml (str | None): Path to yaml config file.
+    """
+
+    def __init__(self, config_yaml: str):
         config_json = yaml.safe_load(open(config_yaml))
         logger.info(f"Trying to load config from {config_yaml}")
 
@@ -31,24 +37,37 @@ class Config(metaclass=Singleton):
 
     @property
     def templates(self) -> list[Template]:
+        """List of templates loaded from config.
+
+        Returns:
+            list[Template]: List of templates.
+        """
         return self._templates
 
-    def get_template(self, template_title: str = None, template_idx: int = None) -> Template | None:
-        if template_title:
-            for form in self.templates:
-                if form.title == template_title:
-                    return copy.deepcopy(form)
-        if template_idx:
-            template_idx = template_idx - 1
-            if template_idx >= len(self.templates):
-                logger.error(
-                    f"Invalid form index: {template_idx}, available indexes from 1 to {len(self.templates)}"
-                )
-                return
-            return copy.deepcopy(self.templates[template_idx])
+    def get_template(self, idx: int) -> Template | None:
+        """Get template by index.
+
+        Args:
+            idx (int): Index of template.
+
+        Returns:
+            Template | None: Template object or None if index is invalid.
+        """
+        template_idx = idx - 1
+        if template_idx >= len(self.templates):
+            logger.error(
+                f"Invalid form index: {template_idx}, available indexes from 1 to {len(self.templates)}"
+            )
+            return
+        return copy.deepcopy(self.templates[template_idx])
 
     @property
     def welcome(self) -> str:
+        """Welcome message loaded from config.
+
+        Returns:
+            str: Welcome message.
+        """
         return self._welcome
 
 
