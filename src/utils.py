@@ -128,8 +128,25 @@ class Helper:
         """
         if not buttons:
             return
-        keyboard = [[KeyboardButton(text=button)] for button in buttons]
+        per_row = Helper.per_row(len(buttons))
+        keyboard = [buttons[i : i + per_row] for i in range(0, len(buttons), per_row)]
+        keyboard = [[KeyboardButton(text=button) for button in row] for row in keyboard]
         return ReplyKeyboardMarkup(keyboard=keyboard, resize_keyboard=True)
+
+    @staticmethod
+    def per_row(buttons: int) -> int:
+        """Calculate how many buttons should be in a row.
+
+        Args:
+            buttons (int): Number of buttons
+
+        Returns:
+            int: Number of buttons in a row
+        """
+        if buttons % 3 == 0 or buttons % 2 == 0:
+            return buttons // 2 if buttons > 2 else buttons
+        else:
+            return buttons // 2 + buttons % 2
 
     @staticmethod
     def inline_keyboard(data: dict[str, str]) -> InlineKeyboardMarkup:
