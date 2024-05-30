@@ -220,7 +220,7 @@ class Callback(BaseEvent):
         if not content.data:
             raise ValueError("Callback data is empty.")
         data = content.data.replace(self._callback, "")
-        self._data = None if not data else self._data_type(data)  # type: ignore[attr-defined]
+        self._data = None if not data else self._data_type(data)
 
     @property
     def data(self):
@@ -339,8 +339,7 @@ class Form(Callback):
 
         logger.debug(f"Form results: {self.results}")
 
-        post = Post.from_content(template.title, self.results, self.content)  # type: ignore[arg-type]
-        # ! Argument 2 to "from_content" of "Post" has incompatible type "dict[str, str] | None"; expected "dict[str, str | list[str]]"  [arg-type]
+        post = Post.from_content(template.title, self.results, self.content)
         Storage().add_post(post)
 
         from src.bot import bot

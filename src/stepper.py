@@ -32,11 +32,14 @@ class Stepper:
             self._entries = entries
             self._complete = complete
 
-        if not self._entries:
-            raise ValueError("Stepper must be initialized with at least one entry")
+        logger.debug(f"Stepper initialized with {len(self.entries)} entries...")
+
         # Generate a unique ID for the Stepper to match aiogram handlers.
         self._id = str(uuid.uuid4())
 
+        # Content is the message or callback query that triggered the Stepper.
+        # It will be overwritten with new content when the Stepper moves forward.
+        # Or in will be preserved in the case of an error, when Stepper is waiting for a valid answer.
         self._content = content
 
         # While state is a FSMContext object, state_code is a string representation of the current state
@@ -46,10 +49,10 @@ class Stepper:
         self._state_code: str | None = None
         self._step = 0
 
-        logger.debug(f"Stepper initialized with {len(self.entries)} entries...")
-
+        # Form is a StatesGroup object that is used to register the Stepper with aiogram.
         self._form = get_form(self.steps)
 
+        # Buttons are used to navigate the Stepper.
         self.main_menu = MainMenu._button
         self.cancel = Cancel._button
 
@@ -81,7 +84,7 @@ class Stepper:
 
     @property
     def entries(self) -> list[Entry]:
-        return self._entries  # type: ignore[return-value]
+        return self._entries
 
     @property
     def entry(self) -> Entry:
@@ -108,24 +111,29 @@ class Stepper:
         self._step = value
 
     @property
-    def state_code(self) -> str | None:
+    def state_code(self) -> str:
         return self._state_code
 
     @state_code.setter
-    def state_code(self, value: str | None) -> None:
+    def state_code(self, value: str) -> None:
         self._state_code = value
 
     @property
-    def results(self) -> dict[str, str] | None:
+    def results(self) -> dict[str, str]:
         return self._results
 
     @results.setter
-    def results(self, value: dict[str, str] | None) -> None:
+    def results(self, value: dict[str, str]) -> None:
         self._results = value
+        self.results_ready.set()
+
+    @property
+    def complete(self) -> str:
+        return self._complete
 
     async def start(self) -> None:
         logger.debug(f"Starting stepper with {len(self.entries)} entries...")
-        if self._step == 0:
+        if self.step == 0:
             await self.forward()
             return await self.register()
         else:
@@ -141,8 +149,6 @@ class Stepper:
     async def validate(self, content: Message | CallbackQuery) -> bool:
         logger.debug(f"Validating answer for step {self.step} of {len(self.entries)}...")
         answer = content.text if isinstance(content, Message) else content.data
-        if not answer:
-            return False
 
         correct = await self.previous_entry.validate_answer(answer)
         if not correct:
@@ -156,26 +162,26 @@ class Stepper:
         self.state = state
         self.content = content
 
-        await self.state.update_data(**self.data)  # type: ignore
+        await self.state.update_data(**self.data)
 
     async def close(self) -> None:
         logger.debug("Closing stepper...")
         raw_data = await self.state.get_data()
         data = {key.replace(f"{self.id}", ""): value for key, value in raw_data.items()}
         self.results = data
-        self.results_ready.set()
-        logger.debug(f"Saved results: {self._results}...")
-        await self.content.answer(
-            self._complete, reply_markup=Helper.reply_keyboard([self.main_menu])  # type: ignore[arg-type]
-        )
+        logger.debug(f"Saved results: {self.results}...")
+        await Helper.force_answer(self.content, self.complete, butttons=[self.main_menu])
+        # await self.content.answer(
+        #     self.complete, reply_markup=Helper.reply_keyboard([self.main_menu])
+        # )
         await self.state.clear()
 
-    async def get_results(self) -> dict[str, str] | None:
+    async def get_results(self) -> dict[str, str]:
         await self.results_ready.wait()
-        return self._results
+        return self.results
 
     async def _update_state(self) -> None:
-        await self._state.set_state(getattr(self.form, f"{self.id}{self.entry.title}"))
+        await self.state.set_state(getattr(self.form, f"{self.id}{self.entry.title}"))
 
     async def _send_answer(self) -> None:
         entry = self.entry
@@ -202,10 +208,7 @@ class Stepper:
 
     @property
     def keyword(self) -> str | None:
-        state_code = self.state_code
-        if state_code:
-            return state_code.split(":")[1]
-        return None
+        return self.state_code.split(":")[1]
 
     @property
     def details(self) -> str | None:
@@ -215,12 +218,12 @@ class Stepper:
             return self.content.data
 
     @property
-    def data(self) -> dict[str | None, str | None]:
+    def data(self) -> dict[str, str]:
         return {self.keyword: self.details}
 
     def match_step(self) -> None:
         for idx, title in enumerate(self.steps):
-            if self.state_code == getattr(self._form, title):
+            if self.state_code == getattr(self.form, title):
                 logger.debug(f"Current step detected: {idx + 1}...")
                 self.step = idx + 1
 

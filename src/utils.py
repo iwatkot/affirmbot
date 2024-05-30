@@ -103,13 +103,13 @@ class FormMeta(type):
         return super().__new__(cls, name, bases, attrs)
 
 
-class CombinedMeta(FormMeta, type(StatesGroup)):  # type: ignore[misc]
+class CombinedMeta(FormMeta, type(StatesGroup)):
     pass
 
 
 def get_form(steps: list[str]) -> StatesGroup:
 
-    class Form(StatesGroup, metaclass=CombinedMeta, steps=steps):  # type: ignore[call-arg, misc]
+    class Form(StatesGroup, metaclass=CombinedMeta, steps=steps):
         pass
 
     return Form
