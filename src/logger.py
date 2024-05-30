@@ -18,7 +18,13 @@ make_dirs([LOG_DIR, TB_DIR, ARCHIVES_DIR])
 
 
 class Logger(logging.getLoggerClass()):
-    """Handles logging to the file and stroudt with timestamps."""
+    """Handles logging to the file and stdout with timestamps.
+
+    Args:
+        name (str): Logger name.
+        level (str): Log level.
+        log_dir (str): Log directory.
+    """
 
     def __init__(
         self,
@@ -39,12 +45,23 @@ class Logger(logging.getLoggerClass()):
         self.addHandler(self.stdout_handler)
         self.addHandler(self.file_handler)
 
-    def log_file(self):
+    @property
+    def log_file(self) -> str:
+        """Generates log file path based on current date.
+
+        Returns:
+            str: Log file path.
+        """
         today = datetime.now().strftime("%Y-%m-%d")
         log_file = os.path.join(self.log_dir, f"{today}.txt")
         return log_file
 
     def dump_traceback(self, tb: traceback) -> None:
+        """Saves traceback to the file.
+
+        Args:
+            tb (traceback): Traceback object.
+        """
         timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
         save_path = os.path.join(TB_DIR, f"{timestamp}.txt")
         with open(save_path, "w") as f:
@@ -53,6 +70,11 @@ class Logger(logging.getLoggerClass()):
         self.info(f"Traceback saved to {save_path}")
 
     def archive_logs(self) -> str:
+        """Archives log files for the current day and returns archive path.
+
+        Returns:
+            str: Archive path.
+        """
         save_path = os.path.join(ARCHIVES_DIR, f"{datetime.now().strftime('%Y-%m-%d')}.zip")
         shutil.make_archive(save_path, "zip", self.log_dir)
         return save_path
