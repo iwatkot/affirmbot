@@ -30,8 +30,17 @@ class Config(metaclass=Singleton):
         self._welcome = welcome
 
     @classmethod
+    def get_instance(cls) -> Config | None:
+        """Get instance of the Singleton class.
+
+        Returns:
+            Config | None: Config object or None if not created yet.
+        """
+        return Singleton._instances.get(cls)
+
+    @classmethod
     def from_yaml(cls, config_yaml: str) -> Config:
-        """Create Config object from yaml file.
+        """Create or update instance of the Config class from yaml file.
 
         Args:
             config_yaml (str): Path to yaml file.
@@ -62,6 +71,12 @@ class Config(metaclass=Singleton):
             raise ValueError("No welcome message found in config")
 
         logger.info(f"Succesfully loaded config with {len(templates)} templates")
+        instance = cls.get_instance()
+        if instance:
+            logger.info(f"Updating existing config instance with {len(templates)} templates.")
+            instance.templates = templates
+            instance.welcome = welcome
+            return instance
         return cls(templates, welcome)
 
     @classmethod
@@ -122,3 +137,12 @@ class Config(metaclass=Singleton):
             str: Welcome message.
         """
         return self._welcome
+
+    @welcome.setter
+    def welcome(self, welcome: str) -> None:
+        """Set welcome message.
+
+        Args:
+            welcome (str): Welcome message.
+        """
+        self._welcome = welcome
