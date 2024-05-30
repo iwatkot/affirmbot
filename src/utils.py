@@ -55,6 +55,8 @@ class StorageFields:
 
 
 class Singleton(type):
+    """Metaclass to create a singleton class."""
+
     _instances = {}
 
     def __call__(cls, *args, **kwargs):
@@ -87,12 +89,22 @@ def make_dirs(dirs: list[str]) -> None:
 
 
 class Helper:
+    """Simple class to simplify some aiogram functions."""
+
     @staticmethod
     async def force_answer(
         content: Message | CallbackQuery,
         text: str,
         buttons: list[str] = [],
     ) -> None:
+        """By default the CallbackQuery.answer() method looks very bad in the telegram chat.
+        For this reason, we will send a classic message with the same text and buttons.
+
+        Args:
+            content (Message | CallbackQuery): Content to reply to
+            text (str): Text of the message
+            buttons (list[str], optional): Buttons to display. Defaults to [].
+        """
         from src.bot import bot
 
         if isinstance(content, CallbackQuery):
@@ -106,6 +118,14 @@ class Helper:
 
     @staticmethod
     def reply_keyboard(buttons: list[str] = None) -> ReplyKeyboardMarkup | None:
+        """Create a reply keyboard with buttons from the given list.
+
+        Args:
+            buttons (list[str], optional): List of buttons. Defaults to None.
+
+        Returns:
+            ReplyKeyboardMarkup | None: Reply keyboard with buttons
+        """
         if not buttons:
             return
         keyboard = [[KeyboardButton(text=button)] for button in buttons]
@@ -113,6 +133,16 @@ class Helper:
 
     @staticmethod
     def inline_keyboard(data: dict[str, str]) -> InlineKeyboardMarkup:
+        """Create an inline keyboard with buttons from the given dictionary,
+        where the key is the text of the button and the value is the callback data, from which
+        the callback query will be created.
+
+        Args:
+            data (dict[str, str]): Dictionary with buttons data
+
+        Returns:
+            InlineKeyboardMarkup: Inline keyboard with buttons
+        """
         keyboard = [
             [InlineKeyboardButton(text=text, callback_data=data)] for text, data in data.items()
         ]
@@ -120,6 +150,8 @@ class Helper:
 
 
 class FormMeta(type):
+    """Simple class to set attributes as State objects without creating the instance of the class."""
+
     def __new__(cls, name: str, bases: tuple, attrs: dict, steps: list[str] | None = None):
         if steps is None:
             steps = []
@@ -129,10 +161,20 @@ class FormMeta(type):
 
 
 class CombinedMeta(FormMeta, type(StatesGroup)):
+    """Since the StatesGroup already has it's metaclass, we need to combine it with our metaclass."""
+
     pass
 
 
 def get_form(steps: list[str]) -> StatesGroup:
+    """Returns a new class, with attributes as State objects.
+
+    Args:
+        steps (list[str]): List of steps
+
+    Returns:
+        StatesGroup: New class with steps as State objects
+    """
 
     class Form(StatesGroup, metaclass=CombinedMeta, steps=steps):
         pass
