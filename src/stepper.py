@@ -15,6 +15,20 @@ logger = Logger(__name__)
 
 
 class Stepper:
+    """Represents an object, that is used to guide the user through a form with multiple steps.
+    Operates with a list of Entry objects, that are used to generate a form with aiogram.
+    On each step, the Stepper sends a message with the title of the current Entry and optional description.
+    After the user provides an answer, the Stepper validates it and moves to the next step.
+    If validation fails, the Stepper sends an error message and waits for a valid answer.
+    After the last step, the Stepper saves the results and sends a completion message.
+
+    Args:
+        content (Message | CallbackQuery): The message or callback query that triggered the Stepper.
+        state (FSMContext): The FSMContext object that is used to store the data.
+        entries (list[Entry] | None): A list of Entry objects that are used to generate the form.
+        complete (str | None): A message that is sent after the last step is completed.
+        template (Template | None): A Template object that is used to generate the form.
+    """
 
     def __init__(
         self,
@@ -28,9 +42,11 @@ class Stepper:
             # If the Stepper is initialized with from a Template.
             self._entries = template.entries
             self._complete = template.complete
-        else:
+        elif entries and complete:
             self._entries = entries
             self._complete = complete
+        else:
+            raise ValueError("Stepper must be initialized with a list of entries or a template...")
 
         logger.debug(f"Stepper initialized with {len(self.entries)} entries...")
 
@@ -63,6 +79,11 @@ class Stepper:
 
     @property
     def id(self) -> str:
+        """Returns the unique ID of the Stepper, which was generated during initialization.
+
+        Returns:
+            str: The unique ID of the Stepper.
+        """
         return self._id
 
     @property
@@ -141,8 +162,8 @@ class Stepper:
 
     async def forward(self) -> None:
         logger.debug(f"Current step: {self.step}, moving forward...")
-        await self._send_answer()
-        await self._update_state()
+        await self.send_answer()
+        await self.update_state()
         self.step += 1
         logger.debug(f"Moved forward to step {self.step}...")
 
@@ -171,23 +192,20 @@ class Stepper:
         self.results = data
         logger.debug(f"Saved results: {self.results}...")
         await Helper.force_answer(self.content, self.complete, butttons=[self.main_menu])
-        # await self.content.answer(
-        #     self.complete, reply_markup=Helper.reply_keyboard([self.main_menu])
-        # )
         await self.state.clear()
 
     async def get_results(self) -> dict[str, str]:
         await self.results_ready.wait()
         return self.results
 
-    async def _update_state(self) -> None:
+    async def update_state(self) -> None:
         await self.state.set_state(getattr(self.form, f"{self.id}{self.entry.title}"))
 
-    async def _send_answer(self) -> None:
+    async def send_answer(self) -> None:
         entry = self.entry
         buttons = entry.options if entry.options else []
         buttons.append(self.cancel)
-        text = self._prepare_text()
+        text = self.prepare_text()
         await Helper.force_answer(self.content, text, buttons)
 
     @property
@@ -199,7 +217,7 @@ class Stepper:
             logger.debug(f"Stepper is not ending, step {self.step} of {len(self.entries)}")
         return ended
 
-    def _prepare_text(self) -> str:
+    def prepare_text(self) -> str:
         entry = self.entry
         text = f"<b>{entry.title}</b>\n\n"
         if entry.description:
