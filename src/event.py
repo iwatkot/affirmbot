@@ -114,6 +114,8 @@ class BaseEvent:
     async def reply(self) -> None:
         """Reply to the user with the answer of the event, using
         force_answer method to always send the message, even for the callback queries."""
+        if not self.answer:
+            return
         await Helper.force_answer(self.content, self.answer, self.menu)
 
     async def process(self) -> None:

@@ -36,9 +36,7 @@ class Logger(logging.getLoggerClass()):
         self.log_dir = log_dir or LOG_DIR
         self.setLevel(level or LOG_LEVEL)
         self.stdout_handler = logging.StreamHandler(sys.stdout)
-        self.file_handler = logging.FileHandler(
-            filename=self.log_file(), mode="a", encoding="utf-8"
-        )
+        self.file_handler = logging.FileHandler(filename=self.log_file, mode="a", encoding="utf-8")
         self.fmt = LOG_FORMATTER
         self.stdout_handler.setFormatter(logging.Formatter(LOG_FORMATTER))
         self.file_handler.setFormatter(logging.Formatter(LOG_FORMATTER))

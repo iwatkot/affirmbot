@@ -29,6 +29,17 @@ class EnvVars:
     ENV = "ENV"
 
 
+class SettingsFields:
+    """Simple class to store settings fields names."""
+
+    ADMINS = "admins"
+    CHANNEL = "channel"
+    ACTIVE_TEMPLATES = "active_templates"
+    INACTIVE_TEMPLATES = "inactive_templates"
+    MIN_APPROVAL = "min_approval"
+    MIN_REJECTION = "min_rejection"
+
+
 class Singleton(type):
     _instances = {}
 
@@ -66,7 +77,7 @@ class Helper:
     async def force_answer(
         content: Message | CallbackQuery,
         text: str,
-        butttons: list[str] = [],
+        buttons: list[str] = [],
     ) -> None:
         from src.bot import bot
 
@@ -74,10 +85,10 @@ class Helper:
             await bot.send_message(
                 content.from_user.id,
                 text,
-                reply_markup=Helper.reply_keyboard(butttons),
+                reply_markup=Helper.reply_keyboard(buttons),
             )
         else:
-            await content.answer(text, reply_markup=Helper.reply_keyboard(butttons))
+            await content.answer(text, reply_markup=Helper.reply_keyboard(buttons))
 
     @staticmethod
     def reply_keyboard(buttons: list[str] = None) -> ReplyKeyboardMarkup | None:
