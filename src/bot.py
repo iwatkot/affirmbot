@@ -26,6 +26,11 @@ bot = Bot(token=cast(str, TOKEN), default=DefaultBotProperties(parse_mode=ParseM
 @events(MenuGroup)
 @handle_errors
 async def menu_group(event: Event) -> None:
+    """Menu group event handler.
+
+    Args:
+        event (Event): Event object.
+    """
     await event.reply()
     await event.process()
 
@@ -34,6 +39,11 @@ async def menu_group(event: Event) -> None:
 @handle_errors
 @admin_only
 async def admin_group(event: Event) -> None:
+    """Admin group event handler.
+
+    Args:
+        event (Event): Event object.
+    """
     await event.reply()
     await event.process()
 
@@ -42,6 +52,11 @@ async def admin_group(event: Event) -> None:
 @handle_errors
 @admin_only
 async def admin_callbacks(callback: Callback) -> None:
+    """Admin callbacks handler.
+
+    Args:
+        callback (Callback): Callback object.
+    """
     await callback.reply()
     await callback.process()
 
@@ -49,12 +64,18 @@ async def admin_callbacks(callback: Callback) -> None:
 @callbacks(UserCallbacks)
 @handle_errors
 async def user_callbacks(callback: Callback) -> None:
+    """User callbacks handler.
+
+    Args:
+        callback (Callback): Callback object.
+    """
     await callback.reply()
     await callback.process()
 
 
 @handle_errors
 async def main() -> None:
+    """Main function to start the bot."""
     dp.include_routers(router, event_router)
     await dp.start_polling(bot)
 
