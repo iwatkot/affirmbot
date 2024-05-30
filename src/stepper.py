@@ -296,7 +296,7 @@ class Stepper:
         data = {key.replace(f"{self.id}", ""): value for key, value in raw_data.items()}
         self.results = data
         logger.debug(f"Saved results: {self.results}...")
-        await Helper.force_answer(self.content, self.complete, butttons=[self.main_menu])
+        await Helper.force_answer(self.content, self.complete, buttons=[self.main_menu])
         await self.state.clear()
 
     async def get_results(self) -> dict[str, str]:
