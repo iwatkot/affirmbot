@@ -2,7 +2,7 @@ from functools import partial
 
 from aiogram import F, MagicFilter
 from aiogram.fsm.context import FSMContext
-from aiogram.types import CallbackQuery, Message
+from aiogram.types import CallbackQuery, FSInputFile, Message
 
 from src.config import Config
 from src.logger import Logger
@@ -151,6 +151,7 @@ class Event(BaseEvent):
     BUTTON_TEMPLATES = "📄 Templates"
     BUTTON_CONFIG = "🔧 Config"
     BUTTON_UPDATE_CONFIG = "🔄 Update config"
+    BUTTON_GET_LOGS = "📂 Get logs"
 
     @property
     def menu(self) -> list[str]:
@@ -218,6 +219,7 @@ class SettingsMenu(Event):
         Event.BUTTON_CHANNEL,
         Event.BUTTON_TEMPLATES,
         Event.BUTTON_CONFIG,
+        Event.BUTTON_GET_LOGS,
         Event.BUTTON_MAIN_MENU,
     ]
 
@@ -300,6 +302,22 @@ class UpdateConfig(Event):
             await self.content.answer("Config successfully updated.")
         else:
             await self.content.answer("Config was not updated, please check the logs.")
+
+
+class GetLogs(Event):
+    """Event for pressing the get logs button. Sends the logs to the user."""
+
+    _button = Event.BUTTON_GET_LOGS
+    _menu = []
+
+    async def process(self) -> None:
+        """Process the event by sending the logs to the user."""
+
+        from src.bot import bot
+
+        archive_path = logger.archive_logs()
+        logs = FSInputFile(archive_path)
+        await bot.send_document(self.user_id, logs)
 
 
 class Forms(Event):
@@ -616,7 +634,7 @@ class MenuGroup(EventGroup):
 class AdminGroup(EventGroup):
     """Group of events for the admin menu."""
 
-    _events = [SettingsMenu, ConfigMenu, Admins, Channel, Templates, UpdateConfig]
+    _events = [SettingsMenu, ConfigMenu, Admins, Channel, Templates, UpdateConfig, GetLogs]
 
 
 class AdminCallbacks(CallbackGroup):

@@ -14,3 +14,4 @@ settings.json
 storage.json
 tmp/
 custom.yml
+log_archives/

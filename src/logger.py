@@ -12,7 +12,7 @@ LOG_LEVEL = os.getenv("LOG_LEVEL", logging.DEBUG)
 LOG_FORMATTER = "%(name)s | %(asctime)s | %(levelname)s | %(message)s"
 LOG_DIR = os.path.join(os.getcwd(), "logs")
 TB_DIR = os.path.join(LOG_DIR, "tracebacks")
-ARCHIVES_DIR = os.path.join(LOG_DIR, "archives")
+ARCHIVES_DIR = os.path.join(os.getcwd(), "log_archives")
 # endregion
 make_dirs([LOG_DIR, TB_DIR, ARCHIVES_DIR])
 
@@ -73,6 +73,8 @@ class Logger(logging.getLoggerClass()):
         Returns:
             str: Archive path.
         """
-        save_path = os.path.join(ARCHIVES_DIR, f"{datetime.now().strftime('%Y-%m-%d')}.zip")
+        save_path = os.path.join(ARCHIVES_DIR, f"{datetime.now().strftime('%Y-%m-%d-%H-%M-%S')}")
+        self.debug(f"Starting to archive logs to {save_path} from {self.log_dir}.")
         shutil.make_archive(save_path, "zip", self.log_dir)
-        return save_path
+        self.info(f"Logs archived to {save_path}.")
+        return save_path + ".zip"
