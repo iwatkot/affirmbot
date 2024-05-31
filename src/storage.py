@@ -236,7 +236,13 @@ class Post:
             if self.is_approved:
                 logger.info(f"Post {self.id} has enough approvals and will be posted.")
                 await bot.send_message(self.user_id, "Your post has been approved.")
-                await bot.send_message(Settings().channel, self.message)
+                try:
+                    await bot.send_message(Settings().channel, self.message)
+                except Exception as e:
+                    if not Settings().channel:
+                        logger.error("Channel ID is not in settings.")
+                    else:
+                        logger.error(f"Failed to send message to the channel: {e}")
 
                 Storage().remove_post(self)
 

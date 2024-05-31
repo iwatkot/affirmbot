@@ -168,10 +168,10 @@ class Entry:
         options: list[str] = None,
         **kwargs,
     ):
-        self.title = title
-        self.incorrect = incorrect
-        self.description = description
-        self.options = options
+        self._title = title
+        self._incorrect = incorrect
+        self._description = description
+        self._options = options
 
     @classmethod
     def from_json(cls, data: dict[str, str | list[str]]) -> Entry:
@@ -227,6 +227,79 @@ class Entry:
             validator (callable): New validator
         """
         self.validate_answer = validator
+
+    @property
+    def title(self) -> str:
+        """Returns the title of the entry.
+
+        Returns:
+            str: Title of the entry
+        """
+        return self._title
+
+    @title.setter
+    def title(self, value: str) -> None:
+        """Sets the title of the entry.
+
+        Args:
+            value (str): Title of the entry
+        """
+        self._title = value
+
+    @property
+    def incorrect(self) -> str:
+        """Returns the incorrect message of the entry.
+
+        Returns:
+            str: Incorrect message
+        """
+        return self._incorrect
+
+    @incorrect.setter
+    def incorrect(self, value: str) -> None:
+        """Sets the incorrect message of the entry.
+
+        Args:
+            value (str): Incorrect message
+        """
+        self._incorrect = value
+
+    @property
+    def description(self) -> str | None:
+        """Returns the description of the entry.
+
+        Returns:
+            str: Description of the entry
+        """
+        return self._description
+
+    @description.setter
+    def description(self, value: str) -> None:
+        """Sets the description of the entry.
+
+        Args:
+            value (str): Description of the entry
+        """
+        self._description = value
+
+    @property
+    def options(self) -> list[str] | None:
+        """Returns the options of the entry.
+
+        Returns:
+            list[str]: Options of the entry
+        """
+        if self._options:
+            return self._options.copy()
+
+    @options.setter
+    def options(self, value: list[str]) -> None:
+        """Sets the options of the entry.
+
+        Args:
+            value (list[str]): Options of the entry
+        """
+        self._options = value
 
 
 class TextEntry(Entry):
