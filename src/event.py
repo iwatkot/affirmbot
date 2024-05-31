@@ -149,6 +149,8 @@ class Event(BaseEvent):
     BUTTON_ADMINS = "👥 Admins"
     BUTTON_CHANNEL = "📡 Channel"
     BUTTON_TEMPLATES = "📄 Templates"
+    BUTTON_CONFIG = "🔧 Config"
+    BUTTON_UPDATE_CONFIG = "🔄 Update config"
 
     @property
     def menu(self) -> list[str]:
@@ -215,8 +217,17 @@ class SettingsMenu(Event):
         Event.BUTTON_ADMINS,
         Event.BUTTON_CHANNEL,
         Event.BUTTON_TEMPLATES,
+        Event.BUTTON_CONFIG,
         Event.BUTTON_MAIN_MENU,
     ]
+
+
+class ConfigMenu(Event):
+    """Event for pressing the config button. Shows the config values with the edit buttons."""
+
+    _button = Event.BUTTON_CONFIG
+    _answer = "In this section you can change the config of templates."
+    _menu = [Event.BUTTON_UPDATE_CONFIG, Event.BUTTON_MAIN_MENU]
 
 
 class Admins(Event):
@@ -274,6 +285,21 @@ class Templates(Event):
             data[f"{callback._text}: {template.title}"] = f"{callback._callback}{template.idx}"
 
         await self.content.answer(reply, reply_markup=Helper.inline_keyboard(data))
+
+
+class UpdateConfig(Event):
+    """Event for pressing the update config button. Launches the config update process."""
+
+    _button = Event.BUTTON_UPDATE_CONFIG
+    _menu = []
+
+    async def process(self) -> None:
+        """Process the event by launching the config update process."""
+        result = Config().update(force=False)
+        if result:
+            await self.content.answer("Config successfully updated.")
+        else:
+            await self.content.answer("Config was not updated, please check the logs.")
 
 
 class Forms(Event):
@@ -590,7 +616,7 @@ class MenuGroup(EventGroup):
 class AdminGroup(EventGroup):
     """Group of events for the admin menu."""
 
-    _events = [SettingsMenu, Admins, Channel, Templates]
+    _events = [SettingsMenu, ConfigMenu, Admins, Channel, Templates, UpdateConfig]
 
 
 class AdminCallbacks(CallbackGroup):

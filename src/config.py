@@ -6,9 +6,10 @@ import shutil
 import yaml
 from git import Repo
 
+from src.globals import CONFIG, CUSTOM_CONFIG, DEFAULT_CONFIG, REPO_DIR
 from src.logger import Logger
 from src.template import Template
-from src.utils import Singleton, find_file
+from src.utils import Singleton, find_file, to_github_url
 
 logger = Logger(__name__)
 
@@ -80,9 +81,10 @@ class Config(metaclass=Singleton):
         return cls(templates, welcome)
 
     @classmethod
-    def from_git(cls, repo_url: str, repo_directory: str, save_path: str) -> Config:
-        Repo.clone_from(repo_url, repo_directory)
-        logger.info(f"Cloned repository from {repo_url} to {repo_directory}")
+    def from_git(cls, repo: str, repo_directory: str, save_path: str) -> Config:
+        repo = to_github_url(repo)
+        Repo.clone_from(repo, repo_directory)
+        logger.info(f"Cloned repository from {repo} to {repo_directory}")
         config_file = find_file(repo_directory, cls.file_name)
         if not config_file:
             return
@@ -146,3 +148,29 @@ class Config(metaclass=Singleton):
             welcome (str): Welcome message.
         """
         self._welcome = welcome
+
+    @staticmethod
+    def update(force: bool = True) -> bool:
+        """Update Config object with custom config if found, otherwise use default config.
+
+        Args:
+            force (bool, optional): Force override existing config. Defaults to True.
+
+        Returns:
+            bool: True if custom config was loaded, False otherwise
+        """
+        try:
+            if CONFIG:
+                logger.info(f"Found CONFIG in environment variables: {CONFIG}.")
+                Config.from_git(CONFIG, REPO_DIR, CUSTOM_CONFIG)
+                return True
+            else:
+                raise ValueError("No CONFIG environment variable found, using default config.yml")
+        except Exception as e:
+            logger.warning(f"Failed to load custom config: {e}")
+            if force:
+                Config.from_yaml(DEFAULT_CONFIG)
+            return False
+
+
+Config.update()

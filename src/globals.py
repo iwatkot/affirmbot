@@ -2,7 +2,6 @@ import os
 
 from dotenv import load_dotenv
 
-from src.config import Config
 from src.logger import Logger
 from src.utils import EnvVars, env_to_list, make_dirs
 
@@ -45,13 +44,3 @@ logger.info(f"Found TOKEN in environment variables (hidden): {'*' * len(TOKEN)}.
 if not ADMINS:
     raise ValueError("Can't find ADMINS in environment variables")
 logger.info(f"Found ADMINS in environment variables: {ADMINS}.")
-
-try:
-    if CONFIG:
-        logger.info(f"Found CONFIG in environment variables: {CONFIG}.")
-        Config.from_git(CONFIG, REPO_DIR, CUSTOM_CONFIG)
-    else:
-        raise ValueError("No CONFIG environment variable found, using default config.yml")
-except Exception as e:
-    logger.warning(f"Failed to load custom config: {e}")
-    Config.from_yaml(DEFAULT_CONFIG)

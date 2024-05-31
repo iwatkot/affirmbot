@@ -213,3 +213,18 @@ def find_file(directory: str, file_name: str) -> str | None:
         if file_name in files:
             return os.path.join(root, file_name)
     return None
+
+
+def to_github_url(repo: str) -> str:
+    """Converts the repository name to the GitHub URL.
+    If the repository name already contains the URL, it will return the same string.
+
+    Args:
+        repo (str): Repository name
+
+    Returns:
+        str: GitHub URL
+    """
+    if not repo.startswith("https://github.com/"):
+        return "https://github.com/" + repo
+    return repo
