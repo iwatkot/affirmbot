@@ -1,9 +1,9 @@
 name: Docker Image CI
+run-name: Release version "${{ github.event.release.tag_name }}"
 
 on:
-    workflow_dispatch:
-#   push:
-#     branches: [ main ]
+    release:
+        types: [published]
 
 jobs:
   build:
