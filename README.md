@@ -1,5 +1,5 @@
 <div align="center" markdown>
-<img src="https://github.com/iwatkot/affirmbot/assets/118521851/dcb58bd6-8f61-4b45-9262-079b41f78c5a">
+<img src="https://github.com/iwatkot/affirmbot/assets/118521851/facdb0c2-2378-467d-9bce-0f42013195fa">
 
 Completely free bot to automate the publication of user-suggested content in the Telegram channel.
 
