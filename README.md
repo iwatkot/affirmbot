@@ -174,6 +174,18 @@ This is the simplest entry type, the user must enter any text. The bot doesn't c
   description: "Please, enter the title for your event."
 ```
 
+### Number
+mode: `number`<br>
+additional keys: none<br>
+This entry type is used to enter the number. The bot checks the correctness of the number. Here is an example:
+
+```yaml
+- mode: "number"
+  title: "Number of participants"
+  incorrect: "You entered an incorrect number, please try again."
+  description: "Please enter the number of participants."
+```
+
 ### Date
 mode: `date`<br>
 additional keys: none<br>

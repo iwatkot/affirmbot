@@ -16,6 +16,7 @@ class Modes:
 
     MODE = "mode"
     TEXT = "text"
+    NUMBER = "number"
     DATE = "date"
     ONEOF = "oneof"
 

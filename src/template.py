@@ -187,6 +187,7 @@ class Entry:
         mode_to_class = {
             Modes.TEXT: TextEntry,
             Modes.DATE: DateEntry,
+            Modes.NUMBER: NumberEntry,
             Modes.ONEOF: OneOfEntry,
         }
         mode = data.get(Modes.MODE)
