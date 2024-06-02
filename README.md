@@ -1,5 +1,5 @@
 <div align="center" markdown>
-<img src="">
+<img src="https://github.com/iwatkot/affirmbot/assets/118521851/dcb58bd6-8f61-4b45-9262-079b41f78c5a">
 
 Completely free bot to automate the publication of user-suggested content in the Telegram channel.
 
@@ -8,17 +8,20 @@ Completely free bot to automate the publication of user-suggested content in the
     <a href="#Quick-Start">Quick Start</a> •
     <a href="#Step-by-step-guide">Step-by-step guide</a> • 
     <a href="#Custom-Templates">Custom templates</a> •
-    <a href="#Entry-Types">Entry Types</a> •
+    <a href="#Entry-Types">Entry Types</a>
+</p>
+<p align="center">
     <a href="#Settings">Settings</a> •
     <a href="#How-to-use-the-bot">How to use the bot</a> •
     <a href="#Bugs-and-Feature-Requests">Bugs and Feature Requests</a> •
-    <a href="#For-developers">For developers</a>
+    <a href="#For-developers">For developers</a> •
+    <a href="#Upcoming-Features">Upcoming Features</a>
 </p>
 
 ![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/iwatkot/affirmbot)
 ![GitHub issues](https://img.shields.io/github/issues/iwatkot/affirmbot)
 ![Docker pulls](https://img.shields.io/docker/pulls/iwatkot/affirmbot)
-[![Maintainability]()]() 
+[![Maintainability](https://api.codeclimate.com/v1/badges/b0be132e5bf9ec3fdb59/maintainability)](https://codeclimate.com/github/iwatkot/affirmbot/maintainability)
 
 </div>
 
@@ -231,3 +234,19 @@ Friendly reminder: this bot is free and open-source, so I can't guarantee that I
 
 ## For developers
 If you don't want to change the core features, you can use the `src/event.py` file to easily add new buttons, callbacks and so on. It's designed in a very simple way, so mostly you just need to add a string for the event and implement the `process()` method, which will be called when the button or callback is clicked.
+
+## Upcoming Features
+I can't guarantee that these features will be implemented, but I'm planning to add them in the future (or at least think about them):
+
+- 🔳 Add more built-in templates for easy deployment.
+- 🔳 Setting minimum approvals and rejections to publish or reject the suggestion. E.g. if you have multiple admins, you can set that the suggestion will be published only if at least 3 admins accept it. Same for rejections. It's already implemented in the code, but not in the UI.
+- 🔳 Backing up the settings to the file and loading them back in case of redeploying the bot (starting a new container). It already works for stopping and ending the existing container, but not for creating a new one.
+- 🔳 Backing up the suggestions which still waiting for approval or rejection and loading them back. Same works for existing containers, but not for creating a new one.
+- 🔳 Add the `Moderator` role. This user won't be able to change the bot settings, only for accepting or rejecting suggestions.
+- 🔳 One bot to rule them all: support of multiple channels? Not sure about this from the user interaction side.
+- 🔳 Show the list of suggestions waiting for the decision for admin. 
+- 🔳 New types of Entries (e.g. link, file, photo).
+
+## Wontfix
+
+- ❌ Adding multiple languages support. Since the main interaction of a user happens with the template, you can create a template in any language you want. But for the menus and buttons, I'm not planning to add any other languages, since it's a lot of (useless) work. But if you want to add a new language, you can fork the repository and do it yourself.
