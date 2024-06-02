@@ -177,10 +177,6 @@ class Event(BaseEvent):
         """
         return F.text == cls._button
 
-    # async def process(self) -> None:
-    #     """Process the event, which may be reimplemented in the child class to handle some specific logic."""
-    #     pass
-
 
 class MainMenu(Event):
     """Event for pressing the main menu button."""
