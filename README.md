@@ -239,7 +239,7 @@ If you don't want to change the core features, you can use the `src/event.py` fi
 I can't guarantee that these features will be implemented, but I'm planning to add them in the future (or at least think about them):
 
 - 🔳 Add more built-in templates for easy deployment.
-- 🔳 Setting minimum approvals and rejections to publish or reject the suggestion. E.g. if you have multiple admins, you can set that the suggestion will be published only if at least 3 admins accept it. Same for rejections. It's already implemented in the code, but not in the UI.
+- ☑️ Setting minimum approvals and rejections to publish or reject the suggestion. E.g. if you have multiple admins, you can set that the suggestion will be published only if at least 3 admins accept it. Same for rejections. It's already implemented in the code, but not in the UI.
 - 🔳 Backing up the settings to the file and loading them back in case of redeploying the bot (starting a new container). It already works for stopping and ending the existing container, but not for creating a new one.
 - 🔳 Backing up the suggestions which still waiting for approval or rejection and loading them back. Same works for existing containers, but not for creating a new one.
 - 🔳 Add the `Moderator` role. This user won't be able to change the bot settings, only for accepting or rejecting suggestions.
