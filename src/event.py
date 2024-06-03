@@ -8,7 +8,7 @@ from src.config import Config
 from src.logger import Logger
 from src.settings import Settings
 from src.storage import Post, Storage
-from src.template import Entry, NumberEntry
+from src.template import Entry, NumberEntry, OneOfEntry
 from src.utils import Helper
 
 logger = Logger(__name__)
@@ -152,6 +152,8 @@ class Event(BaseEvent):
     BUTTON_CONFIG = "🔧 Config"
     BUTTON_UPDATE_CONFIG = "🔄 Update config"
     BUTTON_GET_LOGS = "📂 Get logs"
+    BUTTON_MINIMUM_APPROVALS = "⏫ Minimum approvals"
+    BUTTON_MINIMUM_REJECTIONS = "⏬ Minimum rejections"
 
     @property
     def menu(self) -> list[str]:
@@ -174,10 +176,6 @@ class Event(BaseEvent):
             MagicFilter: The filter to catch the event by the button text.
         """
         return F.text == cls._button
-
-    async def process(self) -> None:
-        """Process the event, which may be reimplemented in the child class to handle some specific logic."""
-        pass
 
 
 class MainMenu(Event):
@@ -229,7 +227,12 @@ class ConfigMenu(Event):
 
     _button = Event.BUTTON_CONFIG
     _answer = "In this section you can change the config of templates."
-    _menu = [Event.BUTTON_UPDATE_CONFIG, Event.BUTTON_MAIN_MENU]
+    _menu = [
+        Event.BUTTON_UPDATE_CONFIG,
+        Event.BUTTON_MAIN_MENU,
+        Event.BUTTON_MINIMUM_APPROVALS,
+        Event.BUTTON_MINIMUM_REJECTIONS,
+    ]
 
 
 class Admins(Event):
@@ -318,6 +321,45 @@ class GetLogs(Event):
         archive_path = logger.archive_logs()
         logs = FSInputFile(archive_path)
         await bot.send_document(self.user_id, logs)
+
+
+class MinimumApprovals(Event):
+    """Event for pressing the minimum approvals button. Sets the minimum approvals in settings."""
+
+    _button = Event.BUTTON_MINIMUM_APPROVALS
+    _menu = []
+    _complete = "Minimum approvals set successfully."
+
+    _minimum_approval_entry = OneOfEntry(
+        "Minimum approvals",
+        "Incorrect minimum approvals value, it can't be more than the number of admins.",
+        "Enter the minimum approvals value. When the form is approved by this number of admins, it will be sent to the channel.",
+        [str(i) for i in range(1, len(Settings().admins) + 1)],
+    )
+
+    _entries = [_minimum_approval_entry]
+    _attribute = "min_approval"
+
+    async def process(self) -> None:
+        """Process the event by setting the minimum approvals in settings."""
+        await super().process()
+        new_value = int(next(iter(self.results.values())))
+        setattr(Settings(), self._attribute, new_value)
+
+
+class MinimumRejections(MinimumApprovals):
+    """Event for pressing the minimum rejections button. Sets the minimum rejections in settings."""
+
+    _button = Event.BUTTON_MINIMUM_REJECTIONS
+    _complete = "Minimum rejections set successfully."
+    _attribute = "min_rejection"
+
+    _minimum_rejection_entry = OneOfEntry(
+        "Minimum rejections",
+        "Incorrect minimum rejections value, it can't be more than the number of admins.",
+        "Enter the minimum rejections value. When the form is rejected by this number of admins, it will be removed from the storage.",
+        [str(i) for i in range(1, len(Settings().admins) + 1)],
+    )
 
 
 class Forms(Event):
@@ -634,7 +676,17 @@ class MenuGroup(EventGroup):
 class AdminGroup(EventGroup):
     """Group of events for the admin menu."""
 
-    _events = [SettingsMenu, ConfigMenu, Admins, Channel, Templates, UpdateConfig, GetLogs]
+    _events = [
+        SettingsMenu,
+        ConfigMenu,
+        Admins,
+        Channel,
+        Templates,
+        UpdateConfig,
+        GetLogs,
+        MinimumApprovals,
+        MinimumRejections,
+    ]
 
 
 class AdminCallbacks(CallbackGroup):
