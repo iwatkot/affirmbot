@@ -533,7 +533,7 @@ class ConnectChannel(Callback):
         "Enter the channel ID to connect.",
     )
 
-    async def validate_connection(self, content: str) -> bool:
+    async def validate_connection(self, content: Message | CallbackQuery) -> bool:
         """Tries to send a message to the channel to check if the bot is connected to the channel.
 
         Args:
@@ -542,6 +542,7 @@ class ConnectChannel(Callback):
         Returns:
             bool: True if the bot is connected to the channel, otherwise False.
         """
+        content = content.text if isinstance(content, Message) else content.data
 
         from src.bot import bot
 
