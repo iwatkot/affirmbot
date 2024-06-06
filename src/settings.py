@@ -26,11 +26,7 @@ class Settings(metaclass=Singleton):
         if not admins:
             admins = ADMINS
         self._admins = admins
-        self._templates = Config().templates
-
-        # Setting index for each template to access them by index later.
-        for idx, template in enumerate(self._templates):
-            template.idx = idx
+        self.load_templates()
         self._channel = channel
 
         self._min_approval = 1
@@ -60,6 +56,14 @@ class Settings(metaclass=Singleton):
             return result
 
         return wrapper
+
+    def load_templates(self) -> None:
+        """Load templates from config."""
+        logger.info("Loading templates from config...")
+        self._templates = Config().templates
+        for idx, template in enumerate(self._templates):
+            template.idx = idx
+        logger.info(f"Lodaed {len(self._templates)} templates.")
 
     @property
     def admins(self) -> list[int]:

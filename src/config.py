@@ -77,6 +77,7 @@ class Config(metaclass=Singleton):
             logger.info(f"Updating existing config instance with {len(templates)} templates.")
             instance.templates = templates
             instance.welcome = welcome
+            print(len(instance.templates))
             return instance
         return cls(templates, welcome)
 
@@ -171,6 +172,11 @@ class Config(metaclass=Singleton):
             if force:
                 Config.from_yaml(DEFAULT_CONFIG)
             return False
+        finally:
+            from src.settings import Settings
+
+            # Always load templates from config.
+            Settings().load_templates()
 
 
 Config.update()
