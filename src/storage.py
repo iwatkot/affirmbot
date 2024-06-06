@@ -126,9 +126,12 @@ class Post:
         id (str): Post ID.
     """
 
-    def __init__(self, title: str, data: dict[str, str | list[str]], id: str = None):
+    def __init__(
+        self, title: str, data: dict[str, str | list[str]], toend: str = None, id: str = None
+    ):
         self._title = title
         self._data = data
+        self._toend = toend
         self._id = id or str(uuid.uuid4())
 
         self._accepted_by = []
@@ -139,7 +142,11 @@ class Post:
 
     @classmethod
     def from_content(
-        cls, title: str, data: dict[str, str | list[str]], content: Message | CallbackQuery
+        cls,
+        title: str,
+        data: dict[str, str | list[str]],
+        toend: str,
+        content: Message | CallbackQuery,
     ) -> Post:
         """Create post object from message or callback content.
 
@@ -152,6 +159,7 @@ class Post:
             Post: Post object.
         """
         post = cls(title, data)
+        post._toend = toend
         post._user_id = content.from_user.id
         post._username = content.from_user.username
         post._full_name = content.from_user.full_name
@@ -174,6 +182,15 @@ class Post:
             dict[str, str | list[str]]: Post data.
         """
         return self._data
+
+    @property
+    def toend(self) -> str:
+        """Message to add to the end of the post.
+
+        Returns:
+            str: Message to add to the end of the post.
+        """
+        return self._toend
 
     @property
     def id(self) -> str:
@@ -310,6 +327,7 @@ class Post:
         return {
             StorageFields.TITLE: self._title,
             StorageFields.DATA: self._data,
+            StorageFields.TOEND: self._toend,
             StorageFields.ID: self._id,
             StorageFields.USER_ID: self._user_id,
             StorageFields.USERNAME: self._username,
@@ -333,6 +351,7 @@ class Post:
             data[StorageFields.DATA],
             id=data[StorageFields.ID],
         )
+        post._toend = data[StorageFields.TOEND]
         post._user_id = data[StorageFields.USER_ID]
         post._username = data[StorageFields.USERNAME]
         post._full_name = data[StorageFields.FULL_NAME]
@@ -355,6 +374,9 @@ class Post:
                     text += f"  - {item}\n"
             else:
                 text += f"{key}: {value}\n"
+
+        if self.toend:
+            text += f"\n\n{self.toend}"
         return text
 
     @property

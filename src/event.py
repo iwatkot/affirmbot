@@ -556,7 +556,7 @@ class Form(Callback):
         logger.debug(f"Form results: {self.results}")
 
         # Create a post from the template and save it to the storage.
-        post = Post.from_content(template.title, self.results, self.content)
+        post = Post.from_content(template.title, self.results, template.toend, self.content)
         Storage().add_post(post)
 
         from src.bot import bot

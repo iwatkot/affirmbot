@@ -18,6 +18,7 @@ class Template:
         description (str, optional): Description of the form. Defaults to None.
         entries (list[Entry] | list[dict[str, str | list[str]]], optional): List of entries. Defaults to None.
         complete (str, optional): Message to display when the form is completed. Defaults to None.
+        toend (str, optional): Message, which will be added to the end of the form. Defaults to None.
         active (bool, optional): Status of the form. Defaults to True.
     """
 
@@ -27,12 +28,14 @@ class Template:
         description: str = None,
         entries: list[Entry] | list[dict[str, str | list[str]]] = None,
         complete: str = None,
+        toend: str = None,
         active: bool = True,
     ):
         self._title = title
         self._description = description
         self._entries = [Entry.from_json(entry) for entry in entries] if entries else []
         self._complete = complete
+        self._toend = toend
         self._active = active
         self._idx = None
 
@@ -71,6 +74,15 @@ class Template:
             str: Complete message
         """
         return self._complete
+
+    @property
+    def toend(self) -> str | None:
+        """Returns the message to add at the end of the form.
+
+        Returns:
+            str: Message to add at the end of the form
+        """
+        return self._toend
 
     @property
     def active(self) -> bool:

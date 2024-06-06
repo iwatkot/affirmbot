@@ -47,6 +47,7 @@ class StorageFields:
     POSTS = "posts"
     TITLE = "title"
     DATA = "data"
+    TOEND = "toend"
     ID = "id"
     USER_ID = "user_id"
     USERNAME = "username"
