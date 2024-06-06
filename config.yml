@@ -35,3 +35,8 @@ templates:
       options:
         - "Yes"
         - "No"
+    - mode: "url"
+      title: "Additional information"
+      skippable: true
+      incorrect: "Please, enter a valid URL."
+      description: "Please, enter the URL to the page with additional information about the event."

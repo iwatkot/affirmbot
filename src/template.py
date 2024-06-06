@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime
+from urllib.parse import urlparse
 
 import src.globals as g
 from src.logger import Logger
@@ -204,6 +205,7 @@ class Entry:
             Modes.DATE: DateEntry,
             Modes.NUMBER: NumberEntry,
             Modes.ONEOF: OneOfEntry,
+            Modes.URL: UrlEntry,
         }
         mode = data.get(Modes.MODE)
         if mode not in mode_to_class:
@@ -472,3 +474,37 @@ class OneOfEntry(Entry):
         if g.is_development:
             return True
         return content in self.options
+
+
+class UrlEntry(Entry):
+    """Class to represent a url entry in the form.
+
+    Args:
+        title (str): Title of the entry
+        incorrect (str): Message to display when the answer is incorrect
+        description (str, optional): Description of the entry. Defaults to None.
+    """
+
+    base_type = str
+
+    def __init__(
+        self, title: str, incorrect: str, description: str = None, skippable: bool = False, **kwargs
+    ):
+        super().__init__(title, incorrect, description, skippable, **kwargs)
+
+    async def validate_answer(self, content: str) -> bool:
+        """Checks if the answer is a url.
+
+        Args:
+            content (str): Answer to the entry
+
+        Returns:
+            bool: True if the answer is a url, False otherwise
+        """
+        if g.is_development:
+            return True
+        try:
+            check = urlparse(content)
+            return all([check.scheme, check.netloc])
+        except:
+            return False

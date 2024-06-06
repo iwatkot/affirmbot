@@ -59,11 +59,12 @@ class Settings(metaclass=Singleton):
 
     def load_templates(self) -> None:
         """Load templates from config."""
-        logger.info("Loading templates from config...")
         self._templates = Config().templates
         for idx, template in enumerate(self._templates):
             template.idx = idx
-        logger.info(f"Lodaed {len(self._templates)} templates.")
+        logger.info(
+            f"List of templates in Settings was updated, now contains {len(self._templates)} templates."
+        )
 
     @property
     def admins(self) -> list[int]:

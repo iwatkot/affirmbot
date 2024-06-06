@@ -269,6 +269,9 @@ class Stepper:
         """
         logger.debug(f"Validating answer for step {self.step} of {len(self.entries)}...")
         answer = content.text if isinstance(content, Message) else content.data
+        if answer == self.skip:
+            logger.debug(f"It looks like the user wants to skip the step, answer: {answer}...")
+            return True
 
         correct = await self.previous_entry.validate_answer(answer)
         if not correct:
@@ -304,7 +307,9 @@ class Stepper:
         """
         raw_data = await self.state.get_data()
         data = {key.replace(f"{self.id}", ""): value for key, value in raw_data.items()}
+        logger.debug(f"Removed unique ID from keys. Following keys saved: {list(data.keys())}...")
         data = {key: value for key, value in data.items() if value != self.skip}
+        logger.debug(f"Removed skipped entries. Following keys saved: {list(data.keys())}...")
         self.results = data
         logger.debug(f"Saved results: {self.results}...")
 
