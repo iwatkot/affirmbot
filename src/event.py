@@ -9,7 +9,7 @@ from src.config import Config
 from src.logger import Logger
 from src.settings import Settings
 from src.storage import Post, Storage
-from src.template import Entry, NumberEntry, OneOfEntry
+from src.template import Entry, FileEntry, NumberEntry, OneOfEntry
 from src.utils import Helper
 
 logger = Logger(__name__)
@@ -400,6 +400,40 @@ class BackupSettings(Event):
         await bot.send_document(self.user_id, settings)
 
 
+class RestoreSettings(Event):
+    """Event for pressing the restore settings button. Uploads the JSON file with the settings."""
+
+    _button = Event.BUTTON_RESTORE_SETTINGS
+    _menu = []
+    _complete = "Settings file uploaded received."
+
+    _settings_upload_entry = FileEntry(
+        "Settings file",
+        "Incorrect settings file, it should be a JSON file.",
+        "Upload the settings file to restore.",
+    )
+
+    _entries = [_settings_upload_entry]
+
+    async def process(self) -> None:
+        """Process the event by restoring the settings from the uploaded file."""
+        from src.bot import bot
+
+        await super().process()
+        file_id = next(iter(self.results.values()))
+        settings_file = await bot.get_file(file_id)
+        await bot.download_file(settings_file.file_path, Settings().restored_json_file)
+        logger.info(f"Settings file saved to {Settings().restored_json_file}, restoring..")
+
+        try:
+            Settings().restore()
+            logger.info("Settings restored successfully.")
+            await self.content.answer("Settings restored successfully.")
+        except Exception as e:
+            logger.error(f"Error restoring settings: {e}")
+            await self.content.answer("Error restoring settings, ensure the file is correct.")
+
+
 class Forms(Event):
     """Event for pressing the forms button. Shows the list of forms to fill out with the form buttons."""
 
@@ -726,6 +760,7 @@ class AdminGroup(EventGroup):
         MinimumApprovals,
         MinimumRejections,
         BackupSettings,
+        RestoreSettings,
     ]
 
 

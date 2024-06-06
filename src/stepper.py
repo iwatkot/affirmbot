@@ -8,7 +8,7 @@ from aiogram.types import CallbackQuery, Message
 from src.decorators import form, handle_errors
 from src.event import Event
 from src.logger import Logger
-from src.template import Entry, Template
+from src.template import Entry, FileEntry, Template
 from src.utils import Helper, get_form
 
 logger = Logger(__name__)
@@ -380,6 +380,8 @@ class Stepper:
         Returns:
             str: The content of the current content object.
         """
+        if isinstance(self.previous_entry, FileEntry):
+            return self.content.document.file_id
         if isinstance(self.content, Message):
             return self.content.text
         elif isinstance(self.content, CallbackQuery):

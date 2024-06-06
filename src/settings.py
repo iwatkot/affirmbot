@@ -5,7 +5,7 @@ import os
 from functools import wraps
 
 from src.config import Config
-from src.globals import ADMINS, SETTINGS_JSON
+from src.globals import ADMINS, RESTORED_SETTINGS_JSON, SETTINGS_JSON
 from src.logger import Logger
 from src.template import Template
 from src.utils import SettingsFields, Singleton
@@ -57,6 +57,15 @@ class Settings(metaclass=Singleton):
 
         return wrapper
 
+    @classmethod
+    def get_instance(cls) -> Config | None:
+        """Get instance of the Singleton class.
+
+        Returns:
+            Config | None: Config object or None if not created yet.
+        """
+        return Singleton._instances.get(cls)
+
     def load_templates(self) -> None:
         """Load templates from config."""
         self._templates = Config().templates
@@ -74,6 +83,15 @@ class Settings(metaclass=Singleton):
             list[int]: List of admin user IDs.
         """
         return self._admins.copy()
+
+    @admins.setter
+    def admins(self, value: list[int]) -> None:
+        """Set list of admin user IDs.
+
+        Args:
+            value (list[int]): List of admin user IDs.
+        """
+        self._admins = value
 
     @dump
     def add_admin(self, user_id: int) -> None:
@@ -250,18 +268,48 @@ class Settings(metaclass=Singleton):
             ValueError: If JSON data is invalid.
         """
         try:
-            settings = cls(data[SettingsFields.ADMINS], data[SettingsFields.CHANNEL])
-            for idx in data.get(SettingsFields.ACTIVE_TEMPLATES, []):
-                template = settings.get_template(idx)
-                template.enable
-            for idx in data.get(SettingsFields.INACTIVE_TEMPLATES, []):
-                template = settings.get_template(idx)
-                template.disable
-            settings._min_approval = data.get(SettingsFields.MIN_APPROVAL, 1)
-            settings._min_rejection = data.get(SettingsFields.MIN_REJECTION, 1)
-            return settings
+            admins = data[SettingsFields.ADMINS]
+            channel = data[SettingsFields.CHANNEL]
         except KeyError as e:
             raise ValueError(f"Invalid JSON data: {repr(e)}")
+
+        if cls.get_instance():
+            instance = cls.get_instance()
+            instance.admins = admins
+            instance.channel = channel
+        else:
+            instance = cls(admins, channel)
+
+        for idx in data.get(SettingsFields.ACTIVE_TEMPLATES, []):
+            template = instance.get_template(idx)
+            template.enable
+
+        for idx in data.get(SettingsFields.INACTIVE_TEMPLATES, []):
+            template = instance.get_template(idx)
+            template.disable
+
+        instance.min_approval = data.get(SettingsFields.MIN_APPROVAL, 1)
+        instance.min_rejection = data.get(SettingsFields.MIN_REJECTION, 1)
+
+        return instance
+
+    def restore(self, restored_file_path: str = None) -> Settings:
+        """Restore settings from JSON file.
+
+        Args:
+            restored_file_path (str): Path to restored JSON file.
+
+        Returns:
+            Settings: Restored settings object.
+        """
+        if not restored_file_path:
+            restored_file_path = RESTORED_SETTINGS_JSON
+        restored_settings = json.load(open(restored_file_path))
+        try:
+            os.remove(restored_file_path)
+        except Exception as e:
+            logger.warning(f"Failed to remove restored settings file: {e}")
+        return self.from_json(restored_settings)
 
     @property
     def json_file(self) -> str:
@@ -271,6 +319,15 @@ class Settings(metaclass=Singleton):
             str: Path to JSON file.
         """
         return SETTINGS_JSON
+
+    @property
+    def restored_json_file(self) -> str:
+        """Return path to restored JSON file.
+
+        Returns:
+            str: Path to restored JSON file.
+        """
+        return RESTORED_SETTINGS_JSON
 
 
 try:

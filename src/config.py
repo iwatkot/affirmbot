@@ -77,7 +77,6 @@ class Config(metaclass=Singleton):
             logger.info(f"Updating existing config instance with {len(templates)} templates.")
             instance.templates = templates
             instance.welcome = welcome
-            print(len(instance.templates))
             return instance
         return cls(templates, welcome)
 
