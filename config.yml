@@ -2,6 +2,7 @@ welcome: "Hello! This bot can help you to fill out a form, which will be posted 
 templates:
   - title: "Event announcement"
     description: "This form is used to announce an event."
+    toend: "Please, use the reactions to let the author know if you are going to visit the event."
     complete: "Thank you for completing the form, you will be notified when it is approved or rejected."
     entries:
     - mode: "text"
