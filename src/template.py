@@ -169,6 +169,7 @@ class Entry:
         title (str): Title of the entry
         incorrect (str): Message to display when the answer is incorrect
         description (str, optional): Description of the entry. Defaults to None.
+        skippable (bool, optional): If the entry can be skipped. Defaults to False.
         options (list[str], optional): List of options for the entry. Defaults to None.
     """
 
@@ -177,12 +178,14 @@ class Entry:
         title: str,
         incorrect: str,
         description: str = None,
+        skippable: bool = False,
         options: list[str] = None,
         **kwargs,
     ):
         self._title = title
         self._incorrect = incorrect
         self._description = description
+        self._skippable = skippable
         self._options = options
 
     @classmethod
@@ -296,6 +299,24 @@ class Entry:
         self._description = value
 
     @property
+    def skippable(self) -> bool:
+        """Returns the skippable status of the entry.
+
+        Returns:
+            bool: Skippable status of the entry
+        """
+        return self._skippable
+
+    @skippable.setter
+    def skippable(self, value: bool) -> None:
+        """Sets the skippable status of the entry.
+
+        Args:
+            value (bool): Skippable status of the entry
+        """
+        self._skippable = value
+
+    @property
     def options(self) -> list[str] | None:
         """Returns the options of the entry.
 
@@ -326,8 +347,10 @@ class TextEntry(Entry):
         description (str, optional): Description of the entry. Defaults to None.
     """
 
-    def __init__(self, title: str, incorrect: str, description: str = None, **kwargs):
-        super().__init__(title, incorrect, description, **kwargs)
+    def __init__(
+        self, title: str, incorrect: str, description: str = None, skippable: bool = False, **kwargs
+    ):
+        super().__init__(title, incorrect, description, skippable, **kwargs)
 
     async def validate_answer(self, content: str) -> bool:
         """Checks if the answer is a string.
@@ -356,8 +379,10 @@ class NumberEntry(Entry):
 
     base_type = int
 
-    def __init__(self, title: str, incorrect: str, description: str = None, **kwargs):
-        super().__init__(title, incorrect, description, **kwargs)
+    def __init__(
+        self, title: str, incorrect: str, description: str = None, skippable: bool = False, **kwargs
+    ):
+        super().__init__(title, incorrect, description, skippable, **kwargs)
 
     async def validate_answer(self, content: str) -> bool:
         """Checks if the answer is a number.
@@ -386,8 +411,10 @@ class DateEntry(Entry):
 
     base_type = str
 
-    def __init__(self, title: str, incorrect: str, description: str = None, **kwargs):
-        super().__init__(title, incorrect, description, **kwargs)
+    def __init__(
+        self, title: str, incorrect: str, description: str = None, skippable: bool = False, **kwargs
+    ):
+        super().__init__(title, incorrect, description, skippable, **kwargs)
 
     async def validate_answer(self, content: str) -> bool:
         """Checks if the answer is a date.
@@ -427,10 +454,11 @@ class OneOfEntry(Entry):
         title: str,
         incorrect: str,
         description: str = None,
+        skippable: bool = False,
         options: list[str] = None,
         **kwargs,
     ):
-        super().__init__(title, incorrect, description, options, **kwargs)
+        super().__init__(title, incorrect, description, skippable, options, **kwargs)
 
     async def validate_answer(self, content: str) -> bool:
         """Checks if the answer is one of the options.

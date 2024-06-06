@@ -143,6 +143,7 @@ class Event(BaseEvent):
 
     BUTTON_MAIN_MENU = "🏠 Main Menu"
     BUTTON_CANCEL = "❌ Cancel"
+    BUTTON_SKIP = "➡️ Skip"
     BUTTON_FORMS = "📝 Forms"
     """ADMIN BUTTONS"""
     BUTTON_SETTINGS = "⚙️ Settings"

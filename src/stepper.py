@@ -6,7 +6,7 @@ from aiogram.fsm.state import StatesGroup
 from aiogram.types import CallbackQuery, Message
 
 from src.decorators import form, handle_errors
-from src.event import Cancel, MainMenu
+from src.event import Event
 from src.logger import Logger
 from src.template import Entry, Template
 from src.utils import Helper, get_form
@@ -69,8 +69,9 @@ class Stepper:
         self._form = get_form(self.steps)
 
         # Buttons are used to navigate the Stepper.
-        self.main_menu = MainMenu._button
-        self.cancel = Cancel._button
+        self.main_menu = Event.BUTTON_MAIN_MENU
+        self.cancel = Event.BUTTON_CANCEL
+        self.skip = Event.BUTTON_SKIP
 
         # Results are stored in a dictionary and are only available after the Stepper is closed.
         # Event is used to notify the results are ready.
@@ -292,12 +293,20 @@ class Stepper:
     async def close(self) -> None:
         """Closes the Stepper and saves the results."""
         logger.debug("Closing stepper...")
-        raw_data = await self.state.get_data()
-        data = {key.replace(f"{self.id}", ""): value for key, value in raw_data.items()}
-        self.results = data
-        logger.debug(f"Saved results: {self.results}...")
+        await self.process_data()
         await Helper.force_answer(self.content, self.complete, buttons=[self.main_menu])
         await self.state.clear()
+        logger.debug("Stepper closed...")
+
+    async def process_data(self) -> None:
+        """Processes the data from the state and saves the results.
+        Removes the unique ID of the Stepper from the keys and skips the data with the skip button.
+        """
+        raw_data = await self.state.get_data()
+        data = {key.replace(f"{self.id}", ""): value for key, value in raw_data.items()}
+        data = {key: value for key, value in data.items() if value != self.skip}
+        self.results = data
+        logger.debug(f"Saved results: {self.results}...")
 
     async def get_results(self) -> dict[str, str]:
         """Waits for the results to be ready and returns them.
@@ -316,6 +325,8 @@ class Stepper:
         """Sends the answer to the user."""
         entry = self.entry
         buttons = entry.options if entry.options else []
+        if entry.skippable:
+            buttons.append(self.skip)
         buttons.append(self.cancel)
         text = self.prepare_text()
         await Helper.force_answer(self.content, text, buttons)
