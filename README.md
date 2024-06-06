@@ -11,7 +11,7 @@ Completely free bot to automate the publication of user-suggested content in the
     <a href="#Entry-Types">Entry Types</a>
 </p>
 <p align="center">
-    <a href="#Settings">Settings</a> •
+    <a href="#Administration">Administration</a> •
     <a href="#How-to-use-the-bot">How to use the bot</a> •
     <a href="#Bugs-and-Feature-Requests">Bugs and Feature Requests</a> •
     <a href="#For-developers">For developers</a> •
@@ -135,6 +135,7 @@ welcome: "Hello! With this bot, you can fill out the form, which will be posted 
 templates:
   - title: "Form for posting to channel"
     description: "This form will be posted to channel if accepted."
+    toend: "Please, use the reactions so author will know that you're going to the event."
     complete: "Thank you for completing the form, the bot will notify you when it will be accepted or rejected."
     entries:
     - mode: "text"
@@ -144,6 +145,7 @@ templates:
     - mode: "date"
       title: "Event Date"
       incorrect: "It was an incorrect date, please try again."
+      skippable: true
       description: "Please enter the date in DD.MM.YYYY format (e.g. 31.05.2024)."
     - mode: "oneof"
       title: "Where will your event take place"
@@ -154,9 +156,40 @@ templates:
         - "Indoor"
 ```
 On the first level, there are two keys: `welcome`, which is a welcome message when the bot starts a conversation with a user, and `templates`, which is a list of templates.<br>
-The bot can operate with multiple templates, which can be enabled or disabled by the admin. Each template has the following keys: `title`, `description`, `complete`, and `entries`. The `title` and `description` are used to describe the template to the user, `complete` is a message that the user will receive after filling out the form, and `entries` is a list of entries that the user must fill out.<br>
-There are several types of entries, learn more about them in the [Entry Types](#Entry-Types) section. But all of them must have the following keys: `mode`, `title`, `incorrect`, and `description`.<br>
-The `mode` is the type of entry and must be entered exactly as in documentation, otherwise the bot won't be able to understand it. The `title` is the title of the entry, the `incorrect` is a message that the user will receive if the entry is incorrect, and the `description` is a message that the user will receive before entering the entry.<br>
+
+### Template structure
+
+So here's a list of keys which represent the template:
+  
+|     Key name       |        Required         |                         Description                                        |
+| :----------------: | :----------------------:|:-------------------------------------------------------------------------: |
+|    `title`         |           ✅            | The title of the template, which will be shown to the user.                |
+|    `description`   |           ❌            | The description of the template, which will be shown to the user.          |
+|    `complete`      |           ✅            | The message that the user will receive after filling out the form.         |
+|    `toend`         |           ✅            | The text that will be added to the end of the filled form.                 |
+|    `entries`       |           ✅            | A list of entries that the user must fill out.                             |
+
+✅ - required, must be entered in the yaml file.<br>
+❌ - optional, can be omitted in the yaml file.
+
+### Entry structure
+
+There are several types of entries, learn more about them in the [Entry Types](#Entry-Types) section.<br>
+But for most of them, you can use the following keys:
+
+|     Key name       |        Required         |                         Description                                        |
+| :----------------: | :----------------------:|:-------------------------------------------------------------------------: |
+|    `mode`          |           ✅            | The type of entry, must be entered exactly as in documentation.            |
+|    `title`         |           ✅            | The title of the entry, which will be shown to the user.                   |
+|    `description`   |           ❌            | The description of the entry, which will be shown to the user.             |
+|    `incorrect`     |           ✅            | The message that the user will receive if the entry is incorrect.          |
+|    `skippable`     |           ❌            | A boolean value that allows the user to skip the entry.                    |
+|    `options`       |           *️⃣            | A list of options that the user can choose from.                           |
+
+✅ - required, must be entered in the yaml file.<br>
+❌ - optional, can be omitted in the yaml file.<br>
+*️⃣ - required for specific entry types.<br>
+
 Some entry types have additional keys, for example, the `oneof` entry type has the `options` key, which is a list of options that the user can choose from. In the next section, you can learn how to use different entry types.
 
 ## Entry Types
@@ -207,6 +240,7 @@ This entry type is used to select one of the options. The user can choose the op
 ```yaml
 - mode: "oneof"
   title: "Where will your event take place"
+  skippable: true
   incorrect: "Please, try again and use the buttons."
   description: "Please select the answer from one of the buttons."
   options:
@@ -214,10 +248,34 @@ This entry type is used to select one of the options. The user can choose the op
     - "Indoor"
 ```
 
-## Settings
-To change the bot's settings, click on the `Settings` button in the bot's menu.
+### Url
+mode: `url`<br>
+additional keys: none<br>
+This entry type is used to enter the URL. The bot checks the correctness of the URL. Here is an example:
+
+```yaml
+- mode: "url"
+  title: "Event URL"
+  incorrect: "You entered an incorrect URL, please try again."
+  description: "Please enter the URL of the event."
+```
+
+### File
+mode: `file`<br>
+additional keys: none<br>
+This entry type is used to upload the file. The bot doesn't check the correctness of the file, it just accepts it. Here is an example:
+
+```yaml
+- mode: "file"
+  title: "Data archive"
+  incorrect: "You uploaded an incorrect file, please try again."
+  description: "Please upload the archive with the data."
+```
+
+## Administration
+To change the bot's admin settings, click on the `Administration` button in the bot's menu.
 ### Channel
-After you run the bot, first of all, you need to add the bot to the channel where you want to publish the suggestions. When the bot is added to the channel, go to the bot's `Settings` and click on the `Channel` button. In this menu, you can connect the bot to the channel or disconnect it. By the way, you'll need to know your channel ID. This can be done with one of the Telegram bots, for example, [GetTheirIdBot](https://t.me/GetTheirIDBot).<br>
+After you run the bot, first of all, you need to add the bot to the channel where you want to publish the suggestions. When the bot is added to the channel, go to the bot's `Administration` and click on the `Channel` button. In this menu, you can connect the bot to the channel or disconnect it. By the way, you'll need to know your channel ID. This can be done with one of the Telegram bots, for example, [GetTheirIdBot](https://t.me/GetTheirIDBot).<br>
 Note: If this bot doesn't work, you can find a similar one by searching for `channel id` in the Telegram search.
 
 ### Admins
@@ -231,6 +289,48 @@ In the `Config` menu, you can reload the configuration from the GitHub repositor
 
 ### Get Logs
 If something goes wrong, you can click on the `Get Logs` button to get the logs from the bot. The bot will send you an archive with all logs and tracebacks. If you want to open an issue, please attach these logs, otherwise, I won't be able to help you.
+
+### Settings menu
+In the `Settings` menu, you can change different admin settings, like the number of approvals and rejections needed to publish or reject the suggestion, and also here you can backup and restore the settings.
+
+#### Minimum approvals
+This setting allows you to set the minimum number of approvals needed to publish the suggestion. For example, if you have 3 admins and set this value to 2, the suggestion will be published if at least 2 admins accept it. The default value is 1 and the maximum value is the number of admins.
+
+#### Minimum rejections
+This setting allows you to set the minimum number of rejections needed to reject the suggestion. For example, if you have 3 admins and set this value to 2, the suggestion will be rejected if at least 2 admins reject it. The default value is 1 and the maximum value is the number of admins.
+
+#### Backup settings
+After clicking on this button, the bot will send you a file with the settings. You can use it to restore the settings in case of redeploying the bot. Friendly reminder: if you won't clean the history of the chat, the file will always be available for you, so you don't need to save it on your device.
+
+#### Restore settings
+After clicking on this button, the bot will ask you to upload the file with the settings. After uploading the file, the bot will restore the settings from it. The file has a pretty simple JSON structure, so you can edit it manually if needed.<br>
+Here's an example of the settings file:
+
+```json
+{
+    "admins": [
+        1234567890,
+    ],
+    "channel": -1234567890,
+    "active_templates": [
+        0
+    ],
+    "inactive_templates": [],
+    "min_approval": 1,
+    "min_rejection": 1
+}
+```
+|     Key name       |        Required         |                         Description                                        |
+| :----------------: | :----------------------:|:-------------------------------------------------------------------------: |
+|    `admins`        |           ✅            | A list of admin Telegram IDs.                                              |
+|    `channel`       |           ✅            | The channel ID where the suggestions will be published.                    |
+|  `active_templates`|           ❌            | A list of indexes of active templates.                                     |
+|`inactive_templates`|           ❌            | A list of indexes of inactive templates.                                   |
+|  `min_approval`    |           ✅            | The minimum number of approvals needed to publish the suggestion.          |
+|  `min_rejection`   |           ✅            | The minimum number of rejections needed to reject the suggestion.          |
+
+✅ - required, must be entered in the JSON file.<br>
+❌ - optional, can be omitted in the JSON file.
 
 ## How to use the bot
 
@@ -251,13 +351,11 @@ If you don't want to change the core features, you can use the `src/event.py` fi
 I can't guarantee that these features will be implemented, but I'm planning to add them in the future (or at least think about them):
 
 - 🔳 Add more built-in templates for easy deployment.
-- ☑️ Setting minimum approvals and rejections to publish or reject the suggestion. E.g. if you have multiple admins, you can set that the suggestion will be published only if at least 3 admins accept it. Same for rejections. It's already implemented in the code, but not in the UI.
-- 🔳 Backing up the settings to the file and loading them back in case of redeploying the bot (starting a new container). It already works for stopping and ending the existing container, but not for creating a new one.
-- 🔳 Backing up the suggestions which still waiting for approval or rejection and loading them back. Same works for existing containers, but not for creating a new one.
+- ☑️ (v0.0.4) Setting minimum approvals and rejections to publish or reject the suggestion. E.g. if you have multiple admins, you can set that the suggestion will be published only if at least 3 admins accept it. Same for rejections. It's already implemented in the code, but not in the UI.
+- ☑️ (v0.0.5) Backing up the settings to the file and loading them back in case of redeploying the bot (starting a new container). It already works for stopping and ending the existing container, but not for creating a new one.
 - 🔳 Add the `Moderator` role. This user won't be able to change the bot settings, only for accepting or rejecting suggestions.
-- 🔳 One bot to rule them all: support of multiple channels? Not sure about this from the user interaction side.
 - 🔳 Show the list of suggestions waiting for the decision for admin. 
-- 🔳 New types of Entries (e.g. link, file, photo).
+- ☑️ (v0.0.5) New types of Entries (e.g. link, file).
 
 ## Wontfix
 

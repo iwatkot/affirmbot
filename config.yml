@@ -19,16 +19,24 @@ templates:
       description: "Please, enter the time of the event in any format."
     - mode: "text"
       title: "Location"
+      skippable: true
       incorrect: "Please, enter a valid location."
       description: "Please, enter the location of the event."
     - mode: "text"
       title: "Description"
+      skippable: true
       incorrect: "Please, enter a valid description."
       description: "Please, enter a short description of the event."
     - mode: "oneof"
       title: "Approval of the author"
+      skippable: true
       incorrect: "Please, select a valid option."
       description: "Do you need to ask the author for approval before visiting the event?"
       options:
         - "Yes"
         - "No"
+    - mode: "url"
+      title: "Additional information"
+      skippable: true
+      incorrect: "Please, enter a valid URL."
+      description: "Please, enter the URL to the page with additional information about the event."

@@ -1,6 +1,10 @@
 from __future__ import annotations
 
+from abc import abstractmethod
 from datetime import datetime
+from urllib.parse import urlparse
+
+from aiogram.types import InlineQuery, Message
 
 import src.globals as g
 from src.logger import Logger
@@ -169,6 +173,7 @@ class Entry:
         title (str): Title of the entry
         incorrect (str): Message to display when the answer is incorrect
         description (str, optional): Description of the entry. Defaults to None.
+        skippable (bool, optional): If the entry can be skipped. Defaults to False.
         options (list[str], optional): List of options for the entry. Defaults to None.
     """
 
@@ -177,12 +182,14 @@ class Entry:
         title: str,
         incorrect: str,
         description: str = None,
+        skippable: bool = False,
         options: list[str] = None,
         **kwargs,
     ):
         self._title = title
         self._incorrect = incorrect
         self._description = description
+        self._skippable = skippable
         self._options = options
 
     @classmethod
@@ -201,6 +208,8 @@ class Entry:
             Modes.DATE: DateEntry,
             Modes.NUMBER: NumberEntry,
             Modes.ONEOF: OneOfEntry,
+            Modes.URL: UrlEntry,
+            Modes.FILE: FileEntry,
         }
         mode = data.get(Modes.MODE)
         if mode not in mode_to_class:
@@ -211,7 +220,8 @@ class Entry:
     def __repr__(self) -> str:
         return f"Entry title='{self.title}' | description='{self.description}' | options='{self.options}'"
 
-    async def validate_answer(self, content: str) -> bool:
+    @abstractmethod
+    async def validate_answer(self, content: Message | InlineQuery) -> bool:
         """Validates the answer to the entry. Must be implemented by the subclass.
 
         Args:
@@ -296,6 +306,24 @@ class Entry:
         self._description = value
 
     @property
+    def skippable(self) -> bool:
+        """Returns the skippable status of the entry.
+
+        Returns:
+            bool: Skippable status of the entry
+        """
+        return self._skippable
+
+    @skippable.setter
+    def skippable(self, value: bool) -> None:
+        """Sets the skippable status of the entry.
+
+        Args:
+            value (bool): Skippable status of the entry
+        """
+        self._skippable = value
+
+    @property
     def options(self) -> list[str] | None:
         """Returns the options of the entry.
 
@@ -326,10 +354,7 @@ class TextEntry(Entry):
         description (str, optional): Description of the entry. Defaults to None.
     """
 
-    def __init__(self, title: str, incorrect: str, description: str = None, **kwargs):
-        super().__init__(title, incorrect, description, **kwargs)
-
-    async def validate_answer(self, content: str) -> bool:
+    async def validate_answer(self, content: Message | InlineQuery) -> bool:
         """Checks if the answer is a string.
 
         Args:
@@ -338,6 +363,7 @@ class TextEntry(Entry):
         Returns:
             bool: True if the answer is a string, False otherwise
         """
+        content = content.text if isinstance(content, Message) else content.data
         try:
             assert isinstance(content, str)
             return True
@@ -356,10 +382,7 @@ class NumberEntry(Entry):
 
     base_type = int
 
-    def __init__(self, title: str, incorrect: str, description: str = None, **kwargs):
-        super().__init__(title, incorrect, description, **kwargs)
-
-    async def validate_answer(self, content: str) -> bool:
+    async def validate_answer(self, content: Message | InlineQuery) -> bool:
         """Checks if the answer is a number.
 
         Args:
@@ -368,6 +391,7 @@ class NumberEntry(Entry):
         Returns:
             bool: True if the answer is a number, False otherwise
         """
+        content = content.text if isinstance(content, Message) else content.data
         try:
             assert content.isdigit()
             return True
@@ -386,10 +410,7 @@ class DateEntry(Entry):
 
     base_type = str
 
-    def __init__(self, title: str, incorrect: str, description: str = None, **kwargs):
-        super().__init__(title, incorrect, description, **kwargs)
-
-    async def validate_answer(self, content: str) -> bool:
+    async def validate_answer(self, content: Message | InlineQuery) -> bool:
         """Checks if the answer is a date.
 
         Args:
@@ -398,6 +419,7 @@ class DateEntry(Entry):
         Returns:
             bool: True if the answer is a date, False otherwise
         """
+        content = content.text if isinstance(content, Message) else content.data
         if g.is_development:
             return True
         date_formats = ["%Y-%m-%d", "%d-%m-%Y", "%m-%d-%Y", "%Y.%m.%d", "%d.%m.%Y", "%m.%d.%Y"]
@@ -422,17 +444,7 @@ class OneOfEntry(Entry):
 
     base_type = str
 
-    def __init__(
-        self,
-        title: str,
-        incorrect: str,
-        description: str = None,
-        options: list[str] = None,
-        **kwargs,
-    ):
-        super().__init__(title, incorrect, description, options, **kwargs)
-
-    async def validate_answer(self, content: str) -> bool:
+    async def validate_answer(self, content: Message | InlineQuery) -> bool:
         """Checks if the answer is one of the options.
 
         Args:
@@ -441,6 +453,66 @@ class OneOfEntry(Entry):
         Returns:
             bool: True if the answer is one of the options, False otherwise
         """
+        content = content.text if isinstance(content, Message) else content.data
         if g.is_development:
             return True
         return content in self.options
+
+
+class UrlEntry(Entry):
+    """Class to represent a url entry in the form.
+
+    Args:
+        title (str): Title of the entry
+        incorrect (str): Message to display when the answer is incorrect
+        description (str, optional): Description of the entry. Defaults to None.
+    """
+
+    base_type = str
+
+    async def validate_answer(self, content: Message | InlineQuery) -> bool:
+        """Checks if the answer is a url.
+
+        Args:
+            content (str): Answer to the entry
+
+        Returns:
+            bool: True if the answer is a url, False otherwise
+        """
+        content = content.text if isinstance(content, Message) else content.data
+        if g.is_development:
+            return True
+        try:
+            check = urlparse(content)
+            return all([check.scheme, check.netloc])
+        except:
+            return False
+
+
+class FileEntry(Entry):
+    """Class to represent a file entry in the form.
+
+    Args:
+        title (str): Title of the entry
+        incorrect (str): Message to display when the answer is incorrect
+        description (str, optional): Description of the entry. Defaults to None.
+    """
+
+    base_type = type
+
+    async def validate_answer(self, content: Message | InlineQuery) -> bool:
+        """Checks if the answer is a file.
+
+        Args:
+            content (str): Answer to the entry
+
+        Returns:
+            bool: True if the answer is a file, False otherwise
+        """
+        if g.is_development:
+            return True
+        try:
+            content = content.document.file_id
+        except AttributeError:
+            return False
+        return content is not None

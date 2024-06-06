@@ -1,3 +1,4 @@
+import os
 from functools import partial
 
 from aiogram import F, MagicFilter
@@ -8,7 +9,7 @@ from src.config import Config
 from src.logger import Logger
 from src.settings import Settings
 from src.storage import Post, Storage
-from src.template import Entry, NumberEntry, OneOfEntry
+from src.template import Entry, FileEntry, NumberEntry, OneOfEntry
 from src.utils import Helper
 
 logger = Logger(__name__)
@@ -143,17 +144,23 @@ class Event(BaseEvent):
 
     BUTTON_MAIN_MENU = "🏠 Main Menu"
     BUTTON_CANCEL = "❌ Cancel"
+    BUTTON_SKIP = "➡️ Skip"
     BUTTON_FORMS = "📝 Forms"
     """ADMIN BUTTONS"""
-    BUTTON_SETTINGS = "⚙️ Settings"
+    BUTTON_ADMINISTRATION = "🔑 Administration"
     BUTTON_ADMINS = "👥 Admins"
     BUTTON_CHANNEL = "📡 Channel"
     BUTTON_TEMPLATES = "📄 Templates"
+    BUTTON_GET_LOGS = "📂 Get logs"
+    """CONFIG BUTTONS"""
     BUTTON_CONFIG = "🔧 Config"
     BUTTON_UPDATE_CONFIG = "🔄 Update config"
-    BUTTON_GET_LOGS = "📂 Get logs"
+    """SETTINGS BUTTONS"""
+    BUTTON_SETTINGS = "⚙️ Settings"
     BUTTON_MINIMUM_APPROVALS = "⏫ Minimum approvals"
     BUTTON_MINIMUM_REJECTIONS = "⏬ Minimum rejections"
+    BUTTON_BACKUP_SETTINGS = "📦 Backup settings"
+    BUTTON_RESTORE_SETTINGS = "📤 Restore settings"
 
     @property
     def menu(self) -> list[str]:
@@ -184,7 +191,7 @@ class MainMenu(Event):
     _button = Event.BUTTON_MAIN_MENU
     _answer = "Now you are in the main menu, use the buttons below to navigate."
     _menu = [Event.BUTTON_FORMS]
-    _admin = [Event.BUTTON_SETTINGS]
+    _admin = [Event.BUTTON_ADMINISTRATION]
 
 
 class Start(MainMenu):
@@ -207,16 +214,17 @@ class Cancel(MainMenu):
         await self.state.clear()
 
 
-class SettingsMenu(Event):
+class AdministrationMenu(Event):
     """Event for pressing the settings button. Shows the settings menu with the admin buttons."""
 
-    _button = Event.BUTTON_SETTINGS
+    _button = Event.BUTTON_ADMINISTRATION
     _answer = "In this section you can change the settings of the bot."
     _menu = [
         Event.BUTTON_ADMINS,
         Event.BUTTON_CHANNEL,
         Event.BUTTON_TEMPLATES,
         Event.BUTTON_CONFIG,
+        Event.BUTTON_SETTINGS,
         Event.BUTTON_GET_LOGS,
         Event.BUTTON_MAIN_MENU,
     ]
@@ -230,8 +238,20 @@ class ConfigMenu(Event):
     _menu = [
         Event.BUTTON_UPDATE_CONFIG,
         Event.BUTTON_MAIN_MENU,
+    ]
+
+
+class SettingsMenu(Event):
+    """Event for pressing the settings button. Shows the settings values with the edit buttons."""
+
+    _button = Event.BUTTON_SETTINGS
+    _answer = "In this section you can change the settings of the bot."
+    _menu = [
         Event.BUTTON_MINIMUM_APPROVALS,
         Event.BUTTON_MINIMUM_REJECTIONS,
+        Event.BUTTON_BACKUP_SETTINGS,
+        Event.BUTTON_RESTORE_SETTINGS,
+        Event.BUTTON_MAIN_MENU,
     ]
 
 
@@ -334,7 +354,7 @@ class MinimumApprovals(Event):
         "Minimum approvals",
         "Incorrect minimum approvals value, it can't be more than the number of admins.",
         "Enter the minimum approvals value. When the form is approved by this number of admins, it will be sent to the channel.",
-        [str(i) for i in range(1, len(Settings().admins) + 1)],
+        options=[str(i) for i in range(1, len(Settings().admins) + 1)],
     )
 
     _entries = [_minimum_approval_entry]
@@ -358,8 +378,60 @@ class MinimumRejections(MinimumApprovals):
         "Minimum rejections",
         "Incorrect minimum rejections value, it can't be more than the number of admins.",
         "Enter the minimum rejections value. When the form is rejected by this number of admins, it will be removed from the storage.",
-        [str(i) for i in range(1, len(Settings().admins) + 1)],
+        options=[str(i) for i in range(1, len(Settings().admins) + 1)],
     )
+
+
+class BackupSettings(Event):
+    """Event for pressing the backup settings button. Sends the user the JSON file with the settings."""
+
+    _button = Event.BUTTON_BACKUP_SETTINGS
+    _menu = []
+
+    async def process(self) -> None:
+        """Process the event by saving the settings to the backup file."""
+        from src.bot import bot
+
+        settings_path = Settings().json_file
+        if not os.path.exists(settings_path):
+            await self.content.answer("Settings file not found.")
+            return
+        settings = FSInputFile(settings_path)
+        await bot.send_document(self.user_id, settings)
+
+
+class RestoreSettings(Event):
+    """Event for pressing the restore settings button. Uploads the JSON file with the settings."""
+
+    _button = Event.BUTTON_RESTORE_SETTINGS
+    _menu = []
+    _complete = "Settings file uploaded received."
+
+    _settings_upload_entry = FileEntry(
+        "Settings file",
+        "Incorrect settings file, it should be a JSON file.",
+        "Upload the settings file to restore.",
+    )
+
+    _entries = [_settings_upload_entry]
+
+    async def process(self) -> None:
+        """Process the event by restoring the settings from the uploaded file."""
+        from src.bot import bot
+
+        await super().process()
+        file_id = next(iter(self.results.values()))
+        settings_file = await bot.get_file(file_id)
+        await bot.download_file(settings_file.file_path, Settings().restored_json_file)
+        logger.info(f"Settings file saved to {Settings().restored_json_file}, restoring..")
+
+        try:
+            Settings().restore()
+            logger.info("Settings restored successfully.")
+            await self.content.answer("Settings restored successfully.")
+        except Exception as e:
+            logger.error(f"Error restoring settings: {e}")
+            await self.content.answer("Error restoring settings, ensure the file is correct.")
 
 
 class Forms(Event):
@@ -677,8 +749,9 @@ class AdminGroup(EventGroup):
     """Group of events for the admin menu."""
 
     _events = [
-        SettingsMenu,
+        AdministrationMenu,
         ConfigMenu,
+        SettingsMenu,
         Admins,
         Channel,
         Templates,
@@ -686,6 +759,8 @@ class AdminGroup(EventGroup):
         GetLogs,
         MinimumApprovals,
         MinimumRejections,
+        BackupSettings,
+        RestoreSettings,
     ]
 
 
