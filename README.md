@@ -156,9 +156,40 @@ templates:
         - "Indoor"
 ```
 On the first level, there are two keys: `welcome`, which is a welcome message when the bot starts a conversation with a user, and `templates`, which is a list of templates.<br>
-The bot can operate with multiple templates, which can be enabled or disabled by the admin. Each template has the following keys: `title`, `description`, `complete`, `toend`, and `entries`. The `title` and `description` are used to describe the template to the user, `complete` is a message that the user will receive after filling out the form, `toend` is a message that will be added to the end of the filled form, and `entries` is a list of entries that the user must fill out.<br>
-There are several types of entries, learn more about them in the [Entry Types](#Entry-Types) section. But all of them must have the following keys: `mode`, `title`, `incorrect`, `skippable`, and `description`.<br>
-The `mode` is the type of entry and must be entered exactly as in documentation, otherwise the bot won't be able to understand it. The `title` is the title of the entry, the `incorrect` is a message that the user will receive if the entry is incorrect, `skippable` is a boolean value that allows the user to skip the entry, it defaults to `false`, which means that the user must fill out the entry, and the `description` is a message that the user will receive before entering the entry.<br>
+
+### Template structure
+
+So here's a list of keys which represent the template:
+  
+|     Key name       |        Required         |                         Description                                        |
+| :----------------: | :----------------------:|:-------------------------------------------------------------------------: |
+|    `title`         |           ✅            | The title of the template, which will be shown to the user.                |
+|    `description`   |           ❌            | The description of the template, which will be shown to the user.          |
+|    `complete`      |           ✅            | The message that the user will receive after filling out the form.         |
+|    `toend`         |           ✅            | The text that will be added to the end of the filled form.                 |
+|    `entries`       |           ✅            | A list of entries that the user must fill out.                             |
+
+✅ - required, must be entered in the yaml file.<br>
+❌ - optional, can be omitted in the yaml file.
+
+### Entry structure
+
+There are several types of entries, learn more about them in the [Entry Types](#Entry-Types) section.<br>
+But for most of them, you can use the following keys:
+
+|     Key name       |        Required         |                         Description                                        |
+| :----------------: | :----------------------:|:-------------------------------------------------------------------------: |
+|    `mode`          |           ✅            | The type of entry, must be entered exactly as in documentation.            |
+|    `title`         |           ✅            | The title of the entry, which will be shown to the user.                   |
+|    `description`   |           ❌            | The description of the entry, which will be shown to the user.             |
+|    `incorrect`     |           ✅            | The message that the user will receive if the entry is incorrect.          |
+|    `skippable`     |           ❌            | A boolean value that allows the user to skip the entry.                    |
+|    `options`       |           *️⃣            | A list of options that the user can choose from.                           |
+
+✅ - required, must be entered in the yaml file.<br>
+❌ - optional, can be omitted in the yaml file.<br>
+*️⃣ - required for specific entry types.<br>
+
 Some entry types have additional keys, for example, the `oneof` entry type has the `options` key, which is a list of options that the user can choose from. In the next section, you can learn how to use different entry types.
 
 ## Entry Types
@@ -266,11 +297,10 @@ If you don't want to change the core features, you can use the `src/event.py` fi
 I can't guarantee that these features will be implemented, but I'm planning to add them in the future (or at least think about them):
 
 - 🔳 Add more built-in templates for easy deployment.
-- ☑️ Setting minimum approvals and rejections to publish or reject the suggestion. E.g. if you have multiple admins, you can set that the suggestion will be published only if at least 3 admins accept it. Same for rejections. It's already implemented in the code, but not in the UI.
+- ☑️ (v0.0.4) Setting minimum approvals and rejections to publish or reject the suggestion. E.g. if you have multiple admins, you can set that the suggestion will be published only if at least 3 admins accept it. Same for rejections. It's already implemented in the code, but not in the UI.
 - 🔳 Backing up the settings to the file and loading them back in case of redeploying the bot (starting a new container). It already works for stopping and ending the existing container, but not for creating a new one.
 - 🔳 Backing up the suggestions which still waiting for approval or rejection and loading them back. Same works for existing containers, but not for creating a new one.
 - 🔳 Add the `Moderator` role. This user won't be able to change the bot settings, only for accepting or rejecting suggestions.
-- 🔳 One bot to rule them all: support of multiple channels? Not sure about this from the user interaction side.
 - 🔳 Show the list of suggestions waiting for the decision for admin. 
 - 🔳 New types of Entries (e.g. link, file, photo).
 
