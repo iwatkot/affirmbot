@@ -260,6 +260,18 @@ This entry type is used to enter the URL. The bot checks the correctness of the 
   description: "Please enter the URL of the event."
 ```
 
+### File
+mode: `file`<br>
+additional keys: none<br>
+This entry type is used to upload the file. The bot doesn't check the correctness of the file, it just accepts it. Here is an example:
+
+```yaml
+- mode: "file"
+  title: "Data archive"
+  incorrect: "You uploaded an incorrect file, please try again."
+  description: "Please upload the archive with the data."
+```
+
 ## Settings
 To change the bot's settings, click on the `Settings` button in the bot's menu.
 ### Channel

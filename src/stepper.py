@@ -273,7 +273,7 @@ class Stepper:
             logger.debug(f"It looks like the user wants to skip the step, answer: {answer}...")
             return True
 
-        correct = await self.previous_entry.validate_answer(answer)
+        correct = await self.previous_entry.validate_answer(content)
         if not correct:
             await content.answer(self.previous_entry.incorrect)
             return False

@@ -20,6 +20,7 @@ class Modes:
     DATE = "date"
     ONEOF = "oneof"
     URL = "url"
+    FILE = "file"
 
 
 class EnvVars:
