@@ -226,7 +226,6 @@ class Settings(metaclass=Singleton):
             dict[str, list[int] | int]: JSON data.
         """
         return {
-            # "admins": self._admins,
             SettingsFields.ADMINS: self._admins,
             SettingsFields.CHANNEL: self._channel,
             SettingsFields.ACTIVE_TEMPLATES: [template.idx for template in self.active_templates],
