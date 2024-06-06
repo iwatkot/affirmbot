@@ -42,10 +42,15 @@ Or you can use your templates, in this case, you'll need to create a public GitH
 docker run -e TOKEN="TELEGRAM_BOT_TOKEN" -e ADMINS="TELEGRAM_ID,TELEGRAM_ID" -e CONFIG="github_username/repo_name" iwatkot/affirmbot
 ```
 
-After the bot is started, remember to connect it to the channel where you want to publish the suggestions, you can learn how to do it in the [Channel](#Channel) section.
+After the bot is started, remember to connect it to the channel where you want to publish the suggestions, you can learn how to do it in the [Channel](#Channel) section.<br>
+If you ensured that the bot was added to the channel, you can add the environment variable `CHANNEL` with the channel ID to the `docker run` command. In this case, the bot will be connected to the channel from the start, but it won't check if it was added correctly.
+
+```bash
+docker run -e TOKEN="TELEGRAM_BOT_TOKEN" -e ADMINS="TELEGRAM_ID,TELEGRAM_ID" -e CHANNEL="CHANNEL_ID" iwatkot/affirmbot
+```
 
 ## Step-by-step guide
-If you're rookie and don't know anything about Docker, GitHub, and all that stuff, this section is for you.
+If you're a rookie and don't know anything about Docker, GitHub, and all that stuff, this section is for you.
 
 ### Step 1: Create a Telegram bot
 In this step, you need to create a Telegram bot and get its token. To do this, you need to talk to the [BotFather](https://t.me/botfather) and follow the instructions, it's very simple. After the bot is created, you will receive a token. Save it, you will need it later. Friendly reminder: don't share your token with anyone, it's a secret key to control your bot.<br>

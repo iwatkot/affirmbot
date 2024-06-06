@@ -29,6 +29,7 @@ TOKEN = os.getenv(EnvVars.TOKEN)
 ADMINS = env_to_list(EnvVars.ADMINS)
 CONFIG = os.getenv(EnvVars.CONFIG)
 ENV = os.getenv(EnvVars.ENV)
+CHANNEL = os.getenv(EnvVars.CHANNEL)
 # endregion
 
 if ENV == "DEV":
@@ -45,3 +46,5 @@ logger.info(f"Found TOKEN in environment variables (hidden): {'*' * len(TOKEN)}.
 if not ADMINS:
     raise ValueError("Can't find ADMINS in environment variables")
 logger.info(f"Found ADMINS in environment variables: {ADMINS}.")
+if CHANNEL:
+    logger.info(f"Found CHANNEL in environment variables: {CHANNEL}.")

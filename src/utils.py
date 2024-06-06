@@ -30,6 +30,7 @@ class EnvVars:
     ADMINS = "ADMINS"
     CONFIG = "CONFIG"
     ENV = "ENV"
+    CHANNEL = "CHANNEL"
 
 
 class SettingsFields:

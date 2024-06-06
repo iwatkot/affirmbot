@@ -5,7 +5,7 @@ import os
 from functools import wraps
 
 from src.config import Config
-from src.globals import ADMINS, RESTORED_SETTINGS_JSON, SETTINGS_JSON
+from src.globals import ADMINS, CHANNEL, RESTORED_SETTINGS_JSON, SETTINGS_JSON
 from src.logger import Logger
 from src.template import Template
 from src.utils import SettingsFields, Singleton
@@ -27,10 +27,18 @@ class Settings(metaclass=Singleton):
             admins = ADMINS
         self._admins = admins
         self.load_templates()
+        if not channel:
+            channel = CHANNEL
         self._channel = channel
 
         self._min_approval = 1
         self._min_rejection = 1
+
+        logger.info(
+            f"Settings initialized. Admins: {self._admins}, Channel: {self._channel}, "
+            f"Number of templates: {len(self._templates)}, "
+            f"Min approval: {self._min_approval}, Min rejection: {self._min_rejection}"
+        )
 
     def dump(func: callable) -> callable:
         """Decorator to save settings to JSON after the function call.
