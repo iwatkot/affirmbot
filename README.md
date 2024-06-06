@@ -135,6 +135,7 @@ welcome: "Hello! With this bot, you can fill out the form, which will be posted 
 templates:
   - title: "Form for posting to channel"
     description: "This form will be posted to channel if accepted."
+    toend: "Please, use the reactions so author will know that you're going to the event."
     complete: "Thank you for completing the form, the bot will notify you when it will be accepted or rejected."
     entries:
     - mode: "text"
@@ -144,6 +145,7 @@ templates:
     - mode: "date"
       title: "Event Date"
       incorrect: "It was an incorrect date, please try again."
+      skippable: true
       description: "Please enter the date in DD.MM.YYYY format (e.g. 31.05.2024)."
     - mode: "oneof"
       title: "Where will your event take place"
@@ -154,9 +156,9 @@ templates:
         - "Indoor"
 ```
 On the first level, there are two keys: `welcome`, which is a welcome message when the bot starts a conversation with a user, and `templates`, which is a list of templates.<br>
-The bot can operate with multiple templates, which can be enabled or disabled by the admin. Each template has the following keys: `title`, `description`, `complete`, and `entries`. The `title` and `description` are used to describe the template to the user, `complete` is a message that the user will receive after filling out the form, and `entries` is a list of entries that the user must fill out.<br>
-There are several types of entries, learn more about them in the [Entry Types](#Entry-Types) section. But all of them must have the following keys: `mode`, `title`, `incorrect`, and `description`.<br>
-The `mode` is the type of entry and must be entered exactly as in documentation, otherwise the bot won't be able to understand it. The `title` is the title of the entry, the `incorrect` is a message that the user will receive if the entry is incorrect, and the `description` is a message that the user will receive before entering the entry.<br>
+The bot can operate with multiple templates, which can be enabled or disabled by the admin. Each template has the following keys: `title`, `description`, `complete`, `toend`, and `entries`. The `title` and `description` are used to describe the template to the user, `complete` is a message that the user will receive after filling out the form, `toend` is a message that will be added to the end of the filled form, and `entries` is a list of entries that the user must fill out.<br>
+There are several types of entries, learn more about them in the [Entry Types](#Entry-Types) section. But all of them must have the following keys: `mode`, `title`, `incorrect`, `skippable`, and `description`.<br>
+The `mode` is the type of entry and must be entered exactly as in documentation, otherwise the bot won't be able to understand it. The `title` is the title of the entry, the `incorrect` is a message that the user will receive if the entry is incorrect, `skippable` is a boolean value that allows the user to skip the entry, it defaults to `false`, which means that the user must fill out the entry, and the `description` is a message that the user will receive before entering the entry.<br>
 Some entry types have additional keys, for example, the `oneof` entry type has the `options` key, which is a list of options that the user can choose from. In the next section, you can learn how to use different entry types.
 
 ## Entry Types
@@ -207,11 +209,24 @@ This entry type is used to select one of the options. The user can choose the op
 ```yaml
 - mode: "oneof"
   title: "Where will your event take place"
+  skippable: true
   incorrect: "Please, try again and use the buttons."
   description: "Please select the answer from one of the buttons."
   options:
     - "Outdoor"
     - "Indoor"
+```
+
+### Url
+mode: `url`<br>
+additional keys: none<br>
+This entry type is used to enter the URL. The bot checks the correctness of the URL. Here is an example:
+
+```yaml
+- mode: "url"
+  title: "Event URL"
+  incorrect: "You entered an incorrect URL, please try again."
+  description: "Please enter the URL of the event."
 ```
 
 ## Settings
