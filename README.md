@@ -371,7 +371,11 @@ If you found a bug, please first save the logs, you can learn how to do it in th
 Friendly reminder: this bot is free and open-source, so I can't guarantee that I will fix all bugs and implement all feature requests, but I will try to do my best. You can also contribute to the project by opening a pull request or forking the repository.<br>
 
 ## For developers
-If you don't want to change the core features, you can use the `src/event.py` file to easily add new buttons, callbacks and so on. It's designed in a very simple way, so mostly you just need to add a string for the event and implement the `process()` method, which will be called when the button or callback is clicked.
+If you want to set the bot in development mode, you can add the `ENV` environment variable with the value `DEV`.<br>
+In this mode:<br>
+- All entry checks will be disabled and always return `True`.
+- All errors will be raised without catching them.
+If you don't want to change the core features, you can use the `src/event.py` file to easily add new buttons, callbacks and so on. It's designed in a very simple way, so mostly you just need to add a string for the event and implement the `process()` method, which will be called when the button or callback is clicked.<br>
 
 ## Upcoming Features
 I can't guarantee that these features will be implemented, but I'm planning to add them in the future (or at least think about them):
