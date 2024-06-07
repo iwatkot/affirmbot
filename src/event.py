@@ -33,8 +33,10 @@ class BaseEvent:
             raise ValueError("No user found in the content.")
         self._user_id = user.id
         self._is_admin = Settings().is_admin(self._user_id)
+        self._is_moderator = Settings().is_moderator(self._user_id)
         logger.debug(
-            f"Event {self.__class__.__name__} initialized for user {self.user_id} (admin: {self.is_admin})"
+            f"Event {self.__class__.__name__} initialized for user {self.user_id} "
+            f"(admin: {self.is_admin}, moderator: {self.is_moderator})"
         )
 
     @property
@@ -74,6 +76,15 @@ class BaseEvent:
             bool: True if the user is an admin, otherwise False.
         """
         return self._is_admin
+
+    @property
+    def is_moderator(self) -> bool:
+        """Return True if the user is a moderator, otherwise False.
+
+        Returns:
+            bool: True if the user is a moderator, otherwise False.
+        """
+        return self._is_moderator
 
     @property
     def answer(self) -> str | None:
@@ -147,8 +158,10 @@ class Event(BaseEvent):
     BUTTON_SKIP = "➡️ Skip"
     BUTTON_FORMS = "📝 Forms"
     """ADMIN BUTTONS"""
-    BUTTON_ADMINISTRATION = "🔑 Administration"
+    BUTTON_TEAM = "👥 Team"
     BUTTON_ADMINS = "👥 Admins"
+    BUTTON_MODERATORS = "👥 Moderators"
+    BUTTON_ADMINISTRATION = "🔑 Administration"
     BUTTON_CHANNEL = "📡 Channel"
     BUTTON_TEMPLATES = "📄 Templates"
     BUTTON_GET_LOGS = "📂 Get logs"
@@ -220,7 +233,8 @@ class AdministrationMenu(Event):
     _button = Event.BUTTON_ADMINISTRATION
     _answer = "In this section you can change the settings of the bot."
     _menu = [
-        Event.BUTTON_ADMINS,
+        # Event.BUTTON_ADMINS,
+        Event.BUTTON_TEAM,
         Event.BUTTON_CHANNEL,
         Event.BUTTON_TEMPLATES,
         Event.BUTTON_CONFIG,
@@ -255,6 +269,18 @@ class SettingsMenu(Event):
     ]
 
 
+class TeamMenu(Event):
+    """Event for pressing the team button. Shows the list of team members with the add and remove buttons."""
+
+    _button = Event.BUTTON_TEAM
+    _answer = "In this section you can manage the team (admins and moderators)."
+    _menu = [
+        Event.BUTTON_ADMINS,
+        Event.BUTTON_MODERATORS,
+        Event.BUTTON_MAIN_MENU,
+    ]
+
+
 class Admins(Event):
     """Event for pressing the admins button. Shows the list of admins with the add and remove buttons."""
 
@@ -271,6 +297,26 @@ class Admins(Event):
             for admin in other_admins
         }
         data.update({AddAdmin._text: AddAdmin._callback})
+        await self.content.answer(reply, reply_markup=Helper.inline_keyboard(data))
+
+
+class Moderators(Event):
+    """Event for pressing the moderators button. Shows the list of moderators with the add and remove buttons."""
+
+    _button = Event.BUTTON_MODERATORS
+    _menu = []
+
+    async def process(self) -> None:
+        """Process the event by showing the list of moderators with the add and remove buttons."""
+        other_moderators = Settings().moderators
+
+        reply = "List of moderators:"
+
+        data = {
+            f"{RemoveModerator._text} with ID: {moderator}": f"{RemoveModerator._callback}{moderator}"
+            for moderator in other_moderators
+        }
+        data.update({AddModerator._text: AddModerator._callback})
         await self.content.answer(reply, reply_markup=Helper.inline_keyboard(data))
 
 
@@ -354,7 +400,7 @@ class MinimumApprovals(Event):
         "Minimum approvals",
         "Incorrect minimum approvals value, it can't be more than the number of admins.",
         "Enter the minimum approvals value. When the form is approved by this number of admins, it will be sent to the channel.",
-        options=[str(i) for i in range(1, len(Settings().admins) + 1)],
+        options=[str(i) for i in range(1, len(Settings().team) + 1)],
     )
 
     _entries = [_minimum_approval_entry]
@@ -378,7 +424,7 @@ class MinimumRejections(MinimumApprovals):
         "Minimum rejections",
         "Incorrect minimum rejections value, it can't be more than the number of admins.",
         "Enter the minimum rejections value. When the form is rejected by this number of admins, it will be removed from the storage.",
-        options=[str(i) for i in range(1, len(Settings().admins) + 1)],
+        options=[str(i) for i in range(1, len(Settings().team) + 1)],
     )
 
 
@@ -498,12 +544,16 @@ class AddAdmin(Callback):
     _data_type = int
     _complete = "Admin added."
 
-    _entries = [NumberEntry("Admin ID", "Incorrect user ID.", "Enter the user ID to add as admin.")]
+    _entries = [
+        NumberEntry("Telegram ID", "Incorrect user ID.", "Enter the user Telegram ID to add it.")
+    ]
+
+    _add_method = "add_admin"
 
     async def process(self) -> None:
         """Process the event by adding the new admin."""
         await super().process()
-        Settings().add_admin(self.answers)
+        getattr(Settings(), self._add_method)(self.answers)
 
 
 class RemoveAdmin(Callback):
@@ -514,9 +564,33 @@ class RemoveAdmin(Callback):
     _data_type = int
     _answer = "Admin removed."
 
+    _remove_method = "remove_admin"
+
     async def process(self) -> None:
         """Process the event by removing the admin."""
-        Settings().remove_admin(self.data)
+        getattr(Settings(), self._remove_method)(self.data)
+
+
+class AddModerator(AddAdmin):
+    """Event for adding a new moderator."""
+
+    _text = "➕ Add new moderator"
+    _callback = "admin__add_moderator"
+    _data_type = int
+    _complete = "Moderator added."
+
+    _add_method = "add_moderator"
+
+
+class RemoveModerator(RemoveAdmin):
+    """Event for removing a moderator."""
+
+    _text = "➖ Remove moderator"
+    _callback = "admin__remove_moderator_"
+    _data_type = int
+    _answer = "Moderator removed."
+
+    _remove_method = "remove_moderator"
 
 
 class ConnectChannel(Callback):
@@ -635,7 +709,7 @@ class Form(Callback):
         from src.bot import bot
 
         # Iterate over the admins and send the form to each of them.
-        for admin in Settings().admins:
+        for admin in Settings().team:
             data = {
                 ConfirmForm._text: f"{ConfirmForm._callback}{post.id}",
                 RejectForm._text: f"{RejectForm._callback}{post.id}",
@@ -653,7 +727,7 @@ class ConfirmForm(Callback):
     """Event for confirming the form. Approves the form by the admin."""
 
     _text = "✅ Confirm"
-    _callback = "admin__confirm_form_"
+    _callback = "moderator__confirm_form_"
     _data_type = str
     _answer = "Form confirmed."
 
@@ -677,7 +751,7 @@ class RejectForm(ConfirmForm):
     """Event for rejecting the form. Rejects the form by the admin."""
 
     _text = "❌ Reject"
-    _callback = "admin__reject_form_"
+    _callback = "moderator__reject_form_"
     _data_type = str
     _answer = "Form rejected."
     _storage_method = "reject_by"
@@ -736,6 +810,7 @@ class CallbackGroup:
             Callback | None: The event by the callback prefix or None if the event is not found.
         """
         for event in cls._callbacks:
+            logger.debug(f"Checking callback {event._callback} in {query.data}")
             if query.data and query.data.startswith(event._callback):
                 return event(query, state)
 
@@ -753,7 +828,9 @@ class AdminGroup(EventGroup):
         AdministrationMenu,
         ConfigMenu,
         SettingsMenu,
+        TeamMenu,
         Admins,
+        Moderators,
         Channel,
         Templates,
         UpdateConfig,
@@ -772,13 +849,20 @@ class AdminCallbacks(CallbackGroup):
     _callbacks = [
         AddAdmin,
         RemoveAdmin,
+        AddModerator,
+        RemoveModerator,
         ConnectChannel,
         DisconnectChannel,
         ActivateTemplate,
         DeactivateTemplate,
-        ConfirmForm,
-        RejectForm,
     ]
+
+
+class ModeratorAdminCallbacks(CallbackGroup):
+    """Group of callback events for the moderator and admin users."""
+
+    _prefix = "moderator__"
+    _callbacks = [ConfirmForm, RejectForm]
 
 
 class UserCallbacks(CallbackGroup):

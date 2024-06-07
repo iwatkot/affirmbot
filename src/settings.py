@@ -26,6 +26,7 @@ class Settings(metaclass=Singleton):
         if not admins:
             admins = ADMINS
         self._admins = admins
+        self._moderators = []
         self.load_templates()
         if not channel:
             channel = CHANNEL
@@ -101,6 +102,15 @@ class Settings(metaclass=Singleton):
         """
         self._admins = value
 
+    @property
+    def team(self) -> list[int]:
+        """Return list of team user IDs.
+
+        Returns:
+            list[int]: List of team user IDs.
+        """
+        return self._admins + self._moderators
+
     @dump
     def add_admin(self, user_id: int) -> None:
         """Add user to the list of admins.
@@ -120,6 +130,44 @@ class Settings(metaclass=Singleton):
         """
         if user_id in self._admins:
             self._admins.remove(user_id)
+
+    @property
+    def moderators(self) -> list[int]:
+        """Return list of moderator user IDs.
+
+        Returns:
+            list[int]: List of moderator user IDs.
+        """
+        return self._moderators.copy()
+
+    @moderators.setter
+    def moderators(self, value: list[int]) -> None:
+        """Set list of moderator user IDs.
+
+        Args:
+            value (list[int]): List of moderator user IDs.
+        """
+        self._moderators = value
+
+    @dump
+    def add_moderator(self, user_id: int) -> None:
+        """Add user to the list of moderators.
+
+        Args:
+            user_id (int): User ID.
+        """
+        if user_id not in self._moderators:
+            self._moderators.append(user_id)
+
+    @dump
+    def remove_moderator(self, user_id: int) -> None:
+        """Remove user from the list of moderators.
+
+        Args:
+            user_id (int): User ID.
+        """
+        if user_id in self._moderators:
+            self._moderators.remove(user_id)
 
     @property
     def active_templates(self) -> list[Template]:
@@ -188,6 +236,17 @@ class Settings(metaclass=Singleton):
         """
         return user_id in self._admins
 
+    def is_moderator(self, user_id: int) -> bool:
+        """Check if user is moderator.
+
+        Args:
+            user_id (int): User ID.
+
+        Returns:
+            bool: True if user is moderator, False otherwise.
+        """
+        return user_id in self._moderators
+
     @property
     def channel(self) -> int | None:
         """Return channel ID.
@@ -253,6 +312,7 @@ class Settings(metaclass=Singleton):
         """
         return {
             SettingsFields.ADMINS: self._admins,
+            SettingsFields.MODERATORS: self._moderators,
             SettingsFields.CHANNEL: self._channel,
             SettingsFields.ACTIVE_TEMPLATES: [template.idx for template in self.active_templates],
             SettingsFields.INACTIVE_TEMPLATES: [
@@ -296,8 +356,9 @@ class Settings(metaclass=Singleton):
             template = instance.get_template(idx)
             template.disable
 
-        instance.min_approval = data.get(SettingsFields.MIN_APPROVAL, 1)
-        instance.min_rejection = data.get(SettingsFields.MIN_REJECTION, 1)
+        instance._min_approval = data.get(SettingsFields.MIN_APPROVAL, 1)
+        instance._min_rejection = data.get(SettingsFields.MIN_REJECTION, 1)
+        instance._moderators = data.get(SettingsFields.MODERATORS, [])
 
         return instance
 

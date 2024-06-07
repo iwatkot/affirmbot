@@ -37,6 +37,7 @@ class SettingsFields:
     """Simple class to store settings fields names."""
 
     ADMINS = "admins"
+    MODERATORS = "moderators"
     CHANNEL = "channel"
     ACTIVE_TEMPLATES = "active_templates"
     INACTIVE_TEMPLATES = "inactive_templates"

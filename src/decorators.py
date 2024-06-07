@@ -68,6 +68,35 @@ def admin_only(func: callable) -> callable:
     return wrapper
 
 
+def moderator_admin_only(func: callable) -> callable:
+    """Decorator to restrict access to commands which available for moderators and admins.
+    If user of the event is not moderator or admin, log warning and return.
+
+    Args:
+        func (callable): Function to decorate.
+
+    Returns:
+        callable: Decorated function.
+    """
+
+    @wraps(func)
+    async def wrapper(event: Event, *args, **kwargs) -> None:
+        """Check if user is moderator or admin and call decorated function.
+
+        Args:
+            event (Event): Event object.
+        """
+        if event.is_moderator or event.is_admin:
+            return await func(event, *args, **kwargs)
+        else:
+            logger.warning(
+                f"User {event.message.from_user.id} tried to access moderator-plus-only command."
+            )
+            return
+
+    return wrapper
+
+
 def handle_errors(func: callable) -> callable:
     """Decorator to handle exceptions in event handlers.
     Logs error and traceback, and raises exception in development mode.

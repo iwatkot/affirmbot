@@ -283,8 +283,14 @@ To change the bot's admin settings, click on the `Administration` button in the 
 After you run the bot, first of all, you need to add the bot to the channel where you want to publish the suggestions. When the bot is added to the channel, go to the bot's `Administration` and click on the `Channel` button. In this menu, you can connect the bot to the channel or disconnect it. By the way, you'll need to know your channel ID. This can be done with one of the Telegram bots, for example, [GetTheirIdBot](https://t.me/GetTheirIDBot).<br>
 Note: If this bot doesn't work, you can find a similar one by searching for `channel id` in the Telegram search.
 
-### Admins
+### Team
+In the `Team` menu, you can add or remove moderators and admins. The difference between them is that the admin can change the bot settings, and the moderator can only accept or reject suggestions. The moderators can't do anything else. Basically, moderators are ordinary users with the ability to accept or reject suggestions.
+
+#### Admins
 In the `Admins` menu, you can add or remove admins by their Telegram IDs. Just a tip: you can't remove yourself from the list of admins.
+
+#### Moderators
+In the `Moderators` menu, you can add or remove moderators by their Telegram IDs.
 
 ### Templates
 In the `Templates` menu, you can enable or disable templates. The users will see only enabled templates.
@@ -316,6 +322,9 @@ Here's an example of the settings file:
     "admins": [
         1234567890,
     ],
+    "moderators": [
+        1234567890,
+    ],
     "channel": -1234567890,
     "active_templates": [
         0
@@ -328,6 +337,7 @@ Here's an example of the settings file:
 |     Key name       |        Required         |                         Description                                        |
 | :----------------: | :----------------------:|:-------------------------------------------------------------------------: |
 |    `admins`        |           ✅            | A list of admin Telegram IDs.                                              |
+|  `moderators`      |           ❌            | A list of moderator Telegram IDs.                                          |
 |    `channel`       |           ✅            | The channel ID where the suggestions will be published.                    |
 |  `active_templates`|           ❌            | A list of indexes of active templates.                                     |
 |`inactive_templates`|           ❌            | A list of indexes of inactive templates.                                   |
@@ -358,7 +368,7 @@ I can't guarantee that these features will be implemented, but I'm planning to a
 - 🔳 Add more built-in templates for easy deployment.
 - ☑️ (v0.0.4) Setting minimum approvals and rejections to publish or reject the suggestion. E.g. if you have multiple admins, you can set that the suggestion will be published only if at least 3 admins accept it. Same for rejections. It's already implemented in the code, but not in the UI.
 - ☑️ (v0.0.5) Backing up the settings to the file and loading them back in case of redeploying the bot (starting a new container). It already works for stopping and ending the existing container, but not for creating a new one.
-- 🔳 Add the `Moderator` role. This user won't be able to change the bot settings, only for accepting or rejecting suggestions.
+- ☑️ (v0.0.8) Add the `Moderator` role. This user won't be able to change the bot settings, only for accepting or rejecting suggestions.
 - 🔳 Show the list of suggestions waiting for the decision for admin. 
 - ☑️ (v0.0.5) New types of Entries (e.g. link, file).
 
