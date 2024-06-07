@@ -5,13 +5,21 @@ from aiogram import Bot, Dispatcher, Router
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 
-from src.decorators import admin_only, callbacks, event_router, events, handle_errors
+from src.decorators import (
+    admin_only,
+    callbacks,
+    event_router,
+    events,
+    handle_errors,
+    moderator_admin_only,
+)
 from src.event import (
     AdminCallbacks,
     AdminGroup,
     Callback,
     Event,
     MenuGroup,
+    ModeratorAdminCallbacks,
     UserCallbacks,
 )
 from src.globals import TOKEN
@@ -53,6 +61,19 @@ async def admin_group(event: Event) -> None:
 @admin_only
 async def admin_callbacks(callback: Callback) -> None:
     """Admin callbacks handler.
+
+    Args:
+        callback (Callback): Callback object.
+    """
+    await callback.reply()
+    await callback.process()
+
+
+@callbacks(ModeratorAdminCallbacks)
+@handle_errors
+@moderator_admin_only
+async def moderator_admin_callbacks(callback: Callback) -> None:
+    """Moderator and admin callbacks handler.
 
     Args:
         callback (Callback): Callback object.
