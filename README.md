@@ -375,7 +375,7 @@ If you want to set the bot in development mode, you can add the `ENV` environmen
 In this mode:<br>
 - All entry checks will be disabled and always return `True`.
 - All errors will be raised without catching them.
-<br>
+
 If you don't want to change the core features, you can use the `src/event.py` file to easily add new buttons, callbacks and so on. It's designed in a very simple way, so mostly you just need to add a string for the event and implement the `process()` method, which will be called when the button or callback is clicked.<br>
 
 ## Upcoming Features
