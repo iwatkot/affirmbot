@@ -49,6 +49,17 @@ If you ensured that the bot was added to the channel, you can add the environmen
 docker run -e TOKEN="TELEGRAM_BOT_TOKEN" -e ADMINS="TELEGRAM_ID,TELEGRAM_ID" -e CHANNEL="CHANNEL_ID" iwatkot/affirmbot
 ```
 
+Here's the full list of environment variables you can use:
+
+|     Variable       |        Required         |                         Description                                             |       Example          |
+| :----------------: | :----------------------:|:------------------------------------------------------------------------------: |:----------------------:|
+|    TOKEN           |           ✅            | The token of your Telegram bot.                                                 | -e TOKEN="12345"       |
+|    ADMINS          |           ✅            | A list of admin Telegram IDs.                                                   | -e ADMINS="123, 123"   |
+|    CHANNEL         |           ❌            | The channel ID where the suggestions will be published.                         | -e CHANNEL="-10000000" |
+|    CONFIG          |           ❌            | The GitHub repository with the `config.yml` file.                               | -e CONFIG="github/repo"|
+|      ENV           |           ❌            | For developers only, if set to "DEV", the bot will run in the development mode. | -e ENV="DEV"           |
+
+
 ## Step-by-step guide
 If you're a rookie and don't know anything about Docker, GitHub, and all that stuff, this section is for you.
 
