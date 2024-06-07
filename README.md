@@ -51,13 +51,13 @@ docker run -e TOKEN="TELEGRAM_BOT_TOKEN" -e ADMINS="TELEGRAM_ID,TELEGRAM_ID" -e 
 
 Here's the full list of environment variables you can use:
 
-|     Variable       |        Required         |                         Description                                             |       Example          |
-| :----------------: | :----------------------:|:------------------------------------------------------------------------------: |:----------------------:|
-|    TOKEN           |           ✅            | The token of your Telegram bot.                                                 | -e TOKEN="12345"       |
-|    ADMINS          |           ✅            | A list of admin Telegram IDs.                                                   | -e ADMINS="123, 123"   |
-|    CHANNEL         |           ❌            | The channel ID where the suggestions will be published.                         | -e CHANNEL="-100000" |
-|    CONFIG          |           ❌            | The GitHub repository with the `config.yml` file.                               | -e CONFIG="github/repo"|
-|      ENV           |           ❌            | For developers only, if set to "DEV", the bot will run in the development mode. | -e ENV="DEV"           |
+|     Variable       |        Required         |                         Description                                             |
+| :----------------: | :----------------------:|:------------------------------------------------------------------------------: |
+|    TOKEN           |           ✅            | The token of your Telegram bot.                                                 |
+|    ADMINS          |           ✅            | A list of admin Telegram IDs.                                                   |
+|    CHANNEL         |           ❌            | The channel ID where the suggestions will be published.                         |
+|    CONFIG          |           ❌            | The GitHub repository with the `config.yml` file.                               | 
+|      ENV           |           ❌            | For developers only, if set to "DEV", the bot will run in the development mode. | 
 
 
 ## Step-by-step guide
