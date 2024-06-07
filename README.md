@@ -189,13 +189,13 @@ But for most of them, you can use the following keys:
 |    `description`   |           ❌            | The description of the entry, which will be shown to the user.             |
 |    `incorrect`     |           ✅            | The message that the user will receive if the entry is incorrect.          |
 |    `skippable`     |           ❌            | A boolean value that allows the user to skip the entry.                    |
-|    `options`       |           *️⃣            | A list of options that the user can choose from.                           |
+|    `options`       |           *️⃣            | A list of options that the user can choose from. Required for `oneof`.     |
 
 ✅ - required, must be entered in the yaml file.<br>
 ❌ - optional, can be omitted in the yaml file.<br>
-*️⃣ - required for specific entry types.<br>
+*️⃣ - required for specific entry types, for others is optional.<br>
 
-Some entry types have additional keys, for example, the `oneof` entry type has the `options` key, which is a list of options that the user can choose from. In the next section, you can learn how to use different entry types.
+Some keys are optional for most entry types, but may be required for specific entry types. For example, the `oneof` entry type requires the `options` key, which is a list of options that the user can choose from. For other entry types, this key is optional and will add additional buttons to the message. In the next section, you can learn how to use different entry types. 
 
 ## Entry Types
 Before we start talking about entry types, I beg you to NOT USE specific entry types (like `date`) if you don't need them. Let me explain to you why. Imagine that the user wants to suggest an event that will take place for example on Friday and enters something like 7 June. If you set the field to text, it would be okay, but if you set it to date, the bot will reject the answer because it doesn't understand the date since it waits for the date in popular formats like 07.06.2024. And it will tell the user that the date was incorrect again and again. So, please, be careful with the entry types you choose. And if you're not sure, just use the text entry type.
