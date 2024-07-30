@@ -136,10 +136,8 @@ So, again step by step for those who are not familiar with GitHub:
 ### Step 1: Create a GitHub account
 I assume this is an obvious step, which doesn't require any additional explanation.
 
-### Step 2: Create a new repository or fork the existing one
-If you don't want to dive into the details, you can fork the [example repository](https://github.com/iwatkot/affirmbot_config) and use it as a template. And if you want to create your repository, I assume you know how to do it.<br>
-Just a tip: to fork the repository, you need to click the "Fork" button in the upper right corner of the repository page.
-After you forked the repository, you can find it in your profile.
+### Step 2: Create a new repository with templates
+Create a new repository which contains `config.yml` file with templates.<br>
 
 ### Step 3: Edit the `config.yml` file
 You can edit the file directly on the GitHub website, just click on it and then click the pencil icon in the upper right corner. Again, I won't describe how to edit the file locally and push it to the repository. <br>
@@ -377,16 +375,6 @@ In this mode:<br>
 - All errors will be raised without catching them.
 
 If you don't want to change the core features, you can use the `src/event.py` file to easily add new buttons, callbacks and so on. It's designed in a very simple way, so mostly you just need to add a string for the event and implement the `process()` method, which will be called when the button or callback is clicked.<br>
-
-## Upcoming Features
-I can't guarantee that these features will be implemented, but I'm planning to add them in the future (or at least think about them):
-
-- 🔳 Add more built-in templates for easy deployment.
-- ☑️ (v0.0.4) Setting minimum approvals and rejections to publish or reject the suggestion. E.g. if you have multiple admins, you can set that the suggestion will be published only if at least 3 admins accept it. Same for rejections. It's already implemented in the code, but not in the UI.
-- ☑️ (v0.0.5) Backing up the settings to the file and loading them back in case of redeploying the bot (starting a new container). It already works for stopping and ending the existing container, but not for creating a new one.
-- ☑️ (v0.0.8) Add the `Moderator` role. This user won't be able to change the bot settings, only for accepting or rejecting suggestions.
-- 🔳 Show the list of suggestions waiting for the decision for admin. 
-- ☑️ (v0.0.5) New types of Entries (e.g. link, file).
 
 ## Wontfix
 
